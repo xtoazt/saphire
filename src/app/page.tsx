@@ -1,103 +1,308 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import {
+  Card,
+  CardBody,
+  CardHeader,
+  Button,
+  Input,
+  Textarea,
+  Tabs,
+  Tab,
+  Switch,
+  Divider,
+  Spinner,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
+} from "@heroui/react";
+import { Search, MessageCircle, Globe, Settings } from "lucide-react";
+import ProxyViewer from "@/components/ProxyViewer";
+import ChatMessage from "@/components/ChatMessage";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [url, setUrl] = useState("");
+  const [proxyUrl, setProxyUrl] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [chatMessage, setChatMessage] = useState("");
+  const [chatHistory, setChatHistory] = useState<Array<{ role: string; content: string; timestamp?: Date }>>([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
+  const [originalUrl, setOriginalUrl] = useState("");
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const handleProxyRequest = async () => {
+    if (!url) return;
+    
+    setIsLoading(true);
+    try {
+      // This will be implemented with the backend
+      const response = await fetch('/api/proxy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url }),
+      });
+      
+      const data = await response.json();
+      setProxyUrl(data.proxyUrl);
+      setOriginalUrl(url);
+    } catch (error) {
+      console.error('Proxy request failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChatSubmit = async () => {
+    if (!chatMessage.trim()) return;
+    
+    const userMessage = { role: 'user', content: chatMessage, timestamp: new Date() };
+    setChatHistory(prev => [...prev, userMessage]);
+    setChatMessage("");
+    setIsChatLoading(true);
+    
+    try {
+      // This will be implemented with LLM7.io integration
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: chatMessage, history: chatHistory }),
+      });
+      
+      const data = await response.json();
+      const aiMessage = { role: 'assistant', content: data.response, timestamp: new Date() };
+      setChatHistory(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Chat request failed:', error);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      {/* Header */}
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+              <Globe className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white">AI Web Proxy</h1>
+              <p className="text-gray-300">Beautiful proxy with AI integration</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <Switch
+              isSelected={darkMode}
+              onValueChange={setDarkMode}
+              color="secondary"
+              thumbIcon={({ isSelected, className }) =>
+                isSelected ? (
+                  <div className={`${className} text-black`}>🌙</div>
+                ) : (
+                  <div className={`${className} text-yellow-500`}>☀️</div>
+                )
+              }
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <Button
+              isIconOnly
+              variant="ghost"
+              color="default"
+              onPress={onOpen}
+              className="text-white"
+            >
+              <Settings className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+        {/* Main Content */}
+        <Tabs
+          aria-label="Options"
+          color="secondary"
+          variant="underlined"
+          classNames={{
+            tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider",
+            cursor: "w-full bg-gradient-to-r from-purple-500 to-pink-500",
+            tab: "max-w-fit px-0 h-12",
+            tabContent: "group-data-[selected=true]:text-white",
+          }}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <Tab
+            key="proxy"
+            title={
+              <div className="flex items-center space-x-2">
+                <Globe className="w-4 h-4" />
+                <span>Web Proxy</span>
+              </div>
+            }
+          >
+            <Card className="mt-6 bg-white/10 backdrop-blur-md border-white/20">
+              <CardHeader className="flex gap-3">
+                <div className="flex flex-col">
+                  <p className="text-md text-white font-semibold">Web Proxy</p>
+                  <p className="text-small text-gray-300">
+                    Browse the web through our secure proxy with AI enhancement
+                  </p>
+                </div>
+              </CardHeader>
+              <Divider className="bg-white/20" />
+              <CardBody className="gap-4">
+                <div className="flex gap-2">
+                  <Input
+                    type="url"
+                    placeholder="Enter URL to proxy..."
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    startContent={<Search className="w-4 h-4 text-gray-400" />}
+                    className="flex-1"
+                    classNames={{
+                      input: "text-white placeholder:text-gray-400",
+                      inputWrapper: "bg-white/10 border-white/20 hover:border-white/30 focus-within:border-purple-500",
+                    }}
+                  />
+                  <Button
+                    color="secondary"
+                    onPress={handleProxyRequest}
+                    isLoading={isLoading}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold"
+                  >
+                    {isLoading ? <Spinner size="sm" /> : "Proxy"}
+                  </Button>
+                </div>
+                
+                {proxyUrl && originalUrl && (
+                  <div className="mt-4">
+                    <ProxyViewer proxyUrl={proxyUrl} originalUrl={originalUrl} />
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+          </Tab>
+
+          <Tab
+            key="chat"
+            title={
+              <div className="flex items-center space-x-2">
+                <MessageCircle className="w-4 h-4" />
+                <span>AI Chat</span>
+              </div>
+            }
+          >
+            <Card className="mt-6 bg-white/10 backdrop-blur-md border-white/20">
+              <CardHeader className="flex gap-3">
+                <div className="flex flex-col">
+                  <p className="text-md text-white font-semibold">AI Assistant</p>
+                  <p className="text-small text-gray-300">
+                    Chat with our AI assistant powered by LLM7.io
+                  </p>
+                </div>
+              </CardHeader>
+              <Divider className="bg-white/20" />
+              <CardBody className="gap-4">
+                <div className="h-96 overflow-y-auto bg-black/20 rounded-lg p-4 space-y-4">
+                  {chatHistory.length === 0 ? (
+                    <div className="text-center text-gray-400 py-8">
+                      <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>Start a conversation with the AI assistant</p>
+                    </div>
+                  ) : (
+                    chatHistory.map((message, index) => (
+                      <ChatMessage
+                        key={index}
+                        role={message.role}
+                        content={message.content}
+                        timestamp={message.timestamp}
+                      />
+                    ))
+                  )}
+                  {isChatLoading && (
+                    <div className="flex justify-start">
+                      <div className="bg-white/20 text-white px-4 py-2 rounded-lg">
+                        <Spinner size="sm" className="mr-2" />
+                        AI is thinking...
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex gap-2">
+                  <Textarea
+                    placeholder="Type your message..."
+                    value={chatMessage}
+                    onChange={(e) => setChatMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleChatSubmit())}
+                    className="flex-1"
+                    minRows={1}
+                    maxRows={3}
+                    classNames={{
+                      input: "text-white placeholder:text-gray-400",
+                      inputWrapper: "bg-white/10 border-white/20 hover:border-white/30 focus-within:border-purple-500",
+                    }}
+                  />
+                  <Button
+                    color="secondary"
+                    onPress={handleChatSubmit}
+                    isDisabled={!chatMessage.trim() || isChatLoading}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold"
+                  >
+                    Send
+                  </Button>
+                </div>
+              </CardBody>
+            </Card>
+          </Tab>
+        </Tabs>
+      </div>
+
+      {/* Settings Modal */}
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} className="bg-white/10 backdrop-blur-md">
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1 text-white">
+                Settings
+              </ModalHeader>
+              <ModalBody>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white">Dark Mode</span>
+                    <Switch
+                      isSelected={darkMode}
+                      onValueChange={setDarkMode}
+                      color="secondary"
+                    />
+                  </div>
+                  <Divider className="bg-white/20" />
+                  <div className="text-sm text-gray-300">
+                    <p className="font-semibold mb-2">API Keys:</p>
+                    <p>• Google API: Configured</p>
+                    <p>• LLM7.io: Configured</p>
+                  </div>
+                </div>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={onClose}>
+                  Close
+                </Button>
+                <Button color="primary" onPress={onClose}>
+                  Save
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </div>
   );
 }
