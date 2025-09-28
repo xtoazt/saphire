@@ -1,16 +1,17 @@
 {
-  "name": "ai-web-proxy",
+  "name": "saphire",
   "version": "1.0.0",
-  "description": "Beautiful web proxy with AI integration powered by HeroUI",
+  "description": "Saphire - Beautiful web proxy with AI integration powered by HeroUI",
   "private": true,
   "keywords": [
+    "saphire",
     "proxy",
     "ai",
     "nextjs",
     "heroui",
     "typescript"
   ],
-  "author": "AI Web Proxy Team",
+  "author": "Saphire Team",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",

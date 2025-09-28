@@ -1,11 +1,11 @@
-# Deployment Guide
+# Saphire Deployment Guide
 
 ## Quick Deploy to Vercel
 
 1. **Push to GitHub**:
    ```bash
    git add .
-   git commit -m "Initial commit: AI Web Proxy with HeroUI"
+   git commit -m "Initial commit: Saphire - AI Web Proxy with HeroUI"
    git push origin main
    ```
 
@@ -13,6 +13,7 @@
    - Go to [vercel.com](https://vercel.com)
    - Import your GitHub repository
    - Vercel will automatically detect Next.js and deploy
+   - Saphire is optimized for Vercel with custom configuration
 
 3. **Environment Variables** (Optional - already configured in code):
    - `GOOGLE_API_KEY`: Your Google API key
@@ -35,7 +36,7 @@ npm run build
 npm start
 ```
 
-## Features
+## Saphire Features
 
 ✅ **Web Proxy**: Secure browsing through our proxy service
 ✅ **AI Integration**: Chat with AI assistant powered by LLM7.io
@@ -43,6 +44,7 @@ npm start
 ✅ **Beautiful UI**: Modern interface with HeroUI components
 ✅ **Responsive Design**: Works on desktop and mobile
 ✅ **Dark Mode**: Beautiful dark theme with toggle
+✅ **Vercel Optimized**: Custom configuration for optimal performance
 
 ## API Endpoints
 

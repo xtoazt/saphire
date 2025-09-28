@@ -1,4 +1,4 @@
-# AI Web Proxy
+# Saphire
 
 A beautiful, modern web proxy with AI integration built using Next.js, HeroUI, and TypeScript.
 
@@ -18,7 +18,8 @@ A beautiful, modern web proxy with AI integration built using Next.js, HeroUI, a
 - **Styling**: Tailwind CSS v4
 - **AI Integration**: LLM7.io API
 - **Proxy**: Custom proxy implementation with Google API enhancement
-- **Icons**: HeroUI Icons
+- **Icons**: Lucide React
+- **Deployment**: Optimized for Vercel
 
 ## Getting Started
 
@@ -32,7 +33,7 @@ A beautiful, modern web proxy with AI integration built using Next.js, HeroUI, a
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd web-proxy
+cd saphire
 ```
 
 2. Install dependencies:
@@ -115,7 +116,10 @@ The application comes pre-configured with:
 
 1. Push your code to GitHub
 2. Connect your repository to Vercel
-3. Deploy with zero configuration
+3. Deploy with zero configuration - Saphire is optimized for Vercel!
+
+**One-Click Deploy:**
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-username/saphire)
 
 ### Other Platforms
 
@@ -154,3 +158,5 @@ For support, please open an issue on GitHub or contact the development team.
 ---
 
 Built with ❤️ using Next.js and HeroUI
+
+**Saphire** - Where beauty meets functionality in web proxy technology.

@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 import { config } from '@/lib/config';
 
+// Enable edge runtime for better performance
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 interface ChatMessage {
   role: string;
   content: string;

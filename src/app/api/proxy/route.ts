@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 import { config } from '@/lib/config';
 
+// Enable caching for better performance
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const { url } = await request.json();

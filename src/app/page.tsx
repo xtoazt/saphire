@@ -97,8 +97,8 @@ export default function Home() {
               <Globe className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white">AI Web Proxy</h1>
-              <p className="text-gray-300">Beautiful proxy with AI integration</p>
+              <h1 className="text-3xl font-bold text-white">Saphire</h1>
+              <p className="text-gray-300">Beautiful AI-powered web proxy</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
