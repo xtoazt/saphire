@@ -5,6 +5,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const targetUrl = searchParams.get('url');
+    const serverLocation = searchParams.get('server') || 'washington-dc';
     
     if (!targetUrl) {
       return new NextResponse('URL parameter is required', { status: 400 });
@@ -31,6 +32,20 @@ export async function GET(request: NextRequest) {
         parsedUrl.hostname.startsWith('172.')) {
       return new NextResponse('Access to local/private networks is not allowed', { status: 403 });
     }
+
+    // Server location mapping
+    const serverLocations: Record<string, { name: string; country: string; flag: string }> = {
+      'washington-dc': { name: 'Washington DC', country: 'United States', flag: '🇺🇸' },
+      'london': { name: 'London', country: 'United Kingdom', flag: '🇬🇧' },
+      'singapore': { name: 'Singapore', country: 'Singapore', flag: '🇸🇬' },
+      'tokyo': { name: 'Tokyo', country: 'Japan', flag: '🇯🇵' },
+      'frankfurt': { name: 'Frankfurt', country: 'Germany', flag: '🇩🇪' },
+      'sydney': { name: 'Sydney', country: 'Australia', flag: '🇦🇺' },
+      'toronto': { name: 'Toronto', country: 'Canada', flag: '🇨🇦' },
+      'mumbai': { name: 'Mumbai', country: 'India', flag: '🇮🇳' }
+    };
+
+    const selectedServer = serverLocations[serverLocation] || serverLocations['washington-dc'];
 
     // Enhanced headers for better compatibility
     const headers: HeadersInit = {
@@ -216,7 +231,8 @@ export async function GET(request: NextRequest) {
         'Cache-Control': 'public, max-age=1800', // 30 minutes cache
         'X-Proxy-Status': 'success',
         'X-Original-URL': targetUrl,
-        'X-Proxy-Location': 'Washington DC, US', // As requested
+        'X-Proxy-Location': `${selectedServer.name}, ${selectedServer.country}`,
+        'X-Proxy-Server': serverLocation,
         'X-Frame-Options': 'SAMEORIGIN',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
@@ -229,6 +245,21 @@ export async function GET(request: NextRequest) {
     
     const isTimeout = error instanceof Error && error.name === 'AbortError';
     const errorMessage = isTimeout ? 'Request timeout' : (error instanceof Error ? error.message : 'Unknown error');
+    
+    // Get server location for error response
+    const { searchParams } = new URL(request.url);
+    const serverLocation = searchParams.get('server') || 'washington-dc';
+    const serverLocations: Record<string, { name: string; country: string; flag: string }> = {
+      'washington-dc': { name: 'Washington DC', country: 'United States', flag: '🇺🇸' },
+      'london': { name: 'London', country: 'United Kingdom', flag: '🇬🇧' },
+      'singapore': { name: 'Singapore', country: 'Singapore', flag: '🇸🇬' },
+      'tokyo': { name: 'Tokyo', country: 'Japan', flag: '🇯🇵' },
+      'frankfurt': { name: 'Frankfurt', country: 'Germany', flag: '🇩🇪' },
+      'sydney': { name: 'Sydney', country: 'Australia', flag: '🇦🇺' },
+      'toronto': { name: 'Toronto', country: 'Canada', flag: '🇨🇦' },
+      'mumbai': { name: 'Mumbai', country: 'India', flag: '🇮🇳' }
+    };
+    const selectedServer = serverLocations[serverLocation] || serverLocations['washington-dc'];
     
     return new NextResponse(
       `<!DOCTYPE html>
@@ -275,7 +306,7 @@ export async function GET(request: NextRequest) {
           <p>Failed to fetch the requested URL. This could be due to network issues, the site being down, or access restrictions.</p>
           <p><strong>Error:</strong> ${errorMessage}</p>
           <div class="location">
-            <strong>📍 Proxy Location:</strong> Washington DC, US
+            <strong>📍 Proxy Location:</strong> ${selectedServer.name}, ${selectedServer.country}
           </div>
         </div>
       </body>
@@ -285,7 +316,7 @@ export async function GET(request: NextRequest) {
         headers: {
           'Content-Type': 'text/html',
           'X-Proxy-Status': 'error',
-          'X-Proxy-Location': 'Washington DC, US',
+          'X-Proxy-Location': `${selectedServer.name}, ${selectedServer.country}`,
         },
       }
     );

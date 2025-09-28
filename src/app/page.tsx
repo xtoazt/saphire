@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Globe, MessageCircle, Settings, ExternalLink, Copy, Check, Loader2, Sparkles } from "lucide-react";
+import { Globe, MessageCircle, Settings, ExternalLink, Copy, Check, Loader2, Sparkles, MapPin } from "lucide-react";
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -30,6 +30,100 @@ interface ProxyInfo {
   supportedSites: string[];
 }
 
+interface ServerLocation {
+  id: string;
+  name: string;
+  city: string;
+  country: string;
+  flag: string;
+  latency: string;
+  status: 'online' | 'offline' | 'maintenance';
+  features: string[];
+}
+
+const SERVER_LOCATIONS: ServerLocation[] = [
+  {
+    id: 'washington-dc',
+    name: 'Washington DC',
+    city: 'Washington DC',
+    country: 'United States',
+    flag: '🇺🇸',
+    latency: '12ms',
+    status: 'online',
+    features: ['Google Services Enhanced', 'High Speed', 'Government Grade']
+  },
+  {
+    id: 'london',
+    name: 'London',
+    city: 'London',
+    country: 'United Kingdom',
+    flag: '🇬🇧',
+    latency: '45ms',
+    status: 'online',
+    features: ['EU Compliance', 'Fast CDN', 'Privacy Focused']
+  },
+  {
+    id: 'singapore',
+    name: 'Singapore',
+    city: 'Singapore',
+    country: 'Singapore',
+    flag: '🇸🇬',
+    latency: '8ms',
+    status: 'online',
+    features: ['Asia Pacific', 'Ultra Low Latency', '24/7 Support']
+  },
+  {
+    id: 'tokyo',
+    name: 'Tokyo',
+    city: 'Tokyo',
+    country: 'Japan',
+    flag: '🇯🇵',
+    latency: '15ms',
+    status: 'online',
+    features: ['Japanese Sites', 'High Bandwidth', 'Gaming Optimized']
+  },
+  {
+    id: 'frankfurt',
+    name: 'Frankfurt',
+    city: 'Frankfurt',
+    country: 'Germany',
+    flag: '🇩🇪',
+    latency: '38ms',
+    status: 'online',
+    features: ['GDPR Compliant', 'European Hub', 'Secure']
+  },
+  {
+    id: 'sydney',
+    name: 'Sydney',
+    city: 'Sydney',
+    country: 'Australia',
+    flag: '🇦🇺',
+    latency: '22ms',
+    status: 'online',
+    features: ['Oceania Coverage', 'Fast Streaming', 'Local Content']
+  },
+  {
+    id: 'toronto',
+    name: 'Toronto',
+    city: 'Toronto',
+    country: 'Canada',
+    flag: '🇨🇦',
+    latency: '18ms',
+    status: 'online',
+    features: ['North America', 'Privacy Laws', 'High Reliability']
+  },
+  {
+    id: 'mumbai',
+    name: 'Mumbai',
+    city: 'Mumbai',
+    country: 'India',
+    flag: '🇮🇳',
+    latency: '25ms',
+    status: 'online',
+    features: ['South Asia', 'Local Services', 'Cost Effective']
+  }
+];
+
 export default function Home() {
   const [url, setUrl] = useState("");
   const [proxyUrl, setProxyUrl] = useState("");
@@ -40,6 +134,7 @@ export default function Home() {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [selectedServer, setSelectedServer] = useState<ServerLocation>(SERVER_LOCATIONS[0]);
 
   const handleProxyRequest = async () => {
     if (!url) return;
@@ -51,7 +146,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, serverLocation: selectedServer.id }),
       });
       
       const data = await response.json();
@@ -116,6 +211,13 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 px-3 py-1 bg-slate-800/50 rounded-lg border border-slate-700">
+              <span className="text-lg">{selectedServer.flag}</span>
+              <div className="text-sm">
+                <div className="text-white font-medium">{selectedServer.name}</div>
+                <div className="text-slate-400 text-xs">{selectedServer.latency}</div>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-slate-300">Dark Mode</span>
               <Switch
@@ -137,7 +239,7 @@ export default function Home() {
                     Configure your Saphire experience
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <span className="text-white">Dark Mode</span>
                     <Switch
@@ -146,7 +248,59 @@ export default function Home() {
                       className="data-[state=checked]:bg-purple-600"
                     />
                   </div>
+                  
                   <Separator className="bg-slate-700" />
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-purple-400" />
+                      <span className="text-white font-semibold">Proxy Server Location</span>
+                    </div>
+                    <ScrollArea className="h-64 w-full">
+                      <div className="space-y-2">
+                        {SERVER_LOCATIONS.map((server) => (
+                          <div
+                            key={server.id}
+                            className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                              selectedServer.id === server.id
+                                ? 'bg-purple-600/20 border-purple-500 text-white'
+                                : 'bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-slate-600/50'
+                            }`}
+                            onClick={() => setSelectedServer(server)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <span className="text-lg">{server.flag}</span>
+                                <div>
+                                  <div className="font-medium">{server.name}</div>
+                                  <div className="text-xs opacity-75">{server.city}, {server.country}</div>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-xs font-medium">{server.latency}</div>
+                                <div className={`text-xs ${
+                                  server.status === 'online' ? 'text-green-400' : 
+                                  server.status === 'maintenance' ? 'text-yellow-400' : 'text-red-400'
+                                }`}>
+                                  {server.status}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {server.features.slice(0, 2).map((feature, index) => (
+                                <Badge key={index} variant="secondary" className="text-xs bg-slate-600/50 text-slate-300">
+                                  {feature}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                  
+                  <Separator className="bg-slate-700" />
+                  
                   <div className="text-sm text-slate-300">
                     <p className="font-semibold mb-2">API Status:</p>
                     <div className="space-y-1">
