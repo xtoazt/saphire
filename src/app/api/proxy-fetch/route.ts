@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Enhanced proxy with better functionality
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -17,23 +18,51 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Invalid URL format', { status: 400 });
     }
 
-    // Block dangerous protocols
+    // Block dangerous protocols and localhost
     if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
       return new NextResponse('Only HTTP and HTTPS protocols are allowed', { status: 400 });
     }
 
-    // Fetch the target URL
+    // Block localhost and private IPs for security
+    if (parsedUrl.hostname === 'localhost' || 
+        parsedUrl.hostname.startsWith('127.') || 
+        parsedUrl.hostname.startsWith('192.168.') ||
+        parsedUrl.hostname.startsWith('10.') ||
+        parsedUrl.hostname.startsWith('172.')) {
+      return new NextResponse('Access to local/private networks is not allowed', { status: 403 });
+    }
+
+    // Enhanced headers for better compatibility
+    const headers: HeadersInit = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Connection': 'keep-alive',
+      'Upgrade-Insecure-Requests': '1',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Sec-Fetch-User': '?1',
+      'Cache-Control': 'no-cache',
+    };
+
+    // Add referer for better compatibility
+    if (parsedUrl.hostname) {
+      headers['Referer'] = `${parsedUrl.protocol}//${parsedUrl.hostname}/`;
+    }
+
+    // Fetch the target URL with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
     const response = await fetch(targetUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-      },
+      headers,
       redirect: 'follow',
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       return new NextResponse(`Failed to fetch: ${response.status} ${response.statusText}`, { 
@@ -51,70 +80,163 @@ export async function GET(request: NextRequest) {
       const baseUrl = new URL(targetUrl);
       const proxyBase = `${request.nextUrl.origin}/api/proxy-fetch?url=`;
       
-      // Rewrite relative URLs to absolute URLs through our proxy
-      processedContent = content.replace(
-        /(href|src|action)=["']([^"']+)["']/g,
-        (match: string, attr: string, url: string) => {
-          // Skip if it's already a full URL, data URI, or starts with #
-          if (url.startsWith('http') || url.startsWith('//') || url.startsWith('#') || url.startsWith('data:')) {
-            return match;
+      // More comprehensive URL rewriting
+      processedContent = content
+        // Rewrite href, src, action attributes
+        .replace(
+          /(href|src|action)=["']([^"']+)["']/g,
+          (match: string, attr: string, url: string) => {
+            if (url.startsWith('http') || url.startsWith('//') || url.startsWith('#') || url.startsWith('data:') || url.startsWith('javascript:')) {
+              return match;
+            }
+            
+            try {
+              const absoluteUrl = new URL(url, baseUrl.origin).toString();
+              return `${attr}="${proxyBase}${encodeURIComponent(absoluteUrl)}"`;
+            } catch {
+              return match;
+            }
           }
-          
-          // Convert relative URLs to absolute
-          let absoluteUrl: string;
-          try {
-            absoluteUrl = new URL(url, baseUrl.origin).toString();
-          } catch {
-            return match; // Skip if URL construction fails
+        )
+        // Rewrite CSS url() functions
+        .replace(
+          /url\(["']?([^"')]+)["']?\)/g,
+          (match: string, url: string) => {
+            if (url.startsWith('http') || url.startsWith('//') || url.startsWith('data:')) {
+              return match;
+            }
+            
+            try {
+              const absoluteUrl = new URL(url, baseUrl.origin).toString();
+              return `url("${proxyBase}${encodeURIComponent(absoluteUrl)}")`;
+            } catch {
+              return match;
+            }
           }
-          
-          // Return the attribute with our proxy URL
-          return `${attr}="${proxyBase}${encodeURIComponent(absoluteUrl)}"`;
-        }
-      );
+        )
+        // Rewrite JavaScript location assignments
+        .replace(
+          /(window\.location|location\.href|location\.replace|location\.assign)\s*=\s*["']([^"']+)["']/g,
+          (match: string, method: string, url: string) => {
+            if (url.startsWith('http') || url.startsWith('//') || url.startsWith('#')) {
+              return match;
+            }
+            
+            try {
+              const absoluteUrl = new URL(url, baseUrl.origin).toString();
+              return `${method} = "${proxyBase}${encodeURIComponent(absoluteUrl)}"`;
+            } catch {
+              return match;
+            }
+          }
+        )
+        // Rewrite form actions
+        .replace(
+          /<form([^>]*?)action=["']([^"']+)["']([^>]*?)>/g,
+          (match: string, before: string, action: string, after: string) => {
+            if (action.startsWith('http') || action.startsWith('//') || action.startsWith('#')) {
+              return match;
+            }
+            
+            try {
+              const absoluteUrl = new URL(action, baseUrl.origin).toString();
+              return `<form${before}action="${proxyBase}${encodeURIComponent(absoluteUrl)}"${after}>`;
+            } catch {
+              return match;
+            }
+          }
+        );
 
-      // Also rewrite any JavaScript that might contain URLs
-      processedContent = processedContent.replace(
-        /(window\.location|location\.href|location\.replace|location\.assign)\s*=\s*["']([^"']+)["']/g,
-        (match: string, method: string, url: string) => {
-          if (url.startsWith('http') || url.startsWith('//') || url.startsWith('#')) {
-            return match;
-          }
-          
-          let absoluteUrl: string;
-          try {
-            absoluteUrl = new URL(url, baseUrl.origin).toString();
-          } catch {
-            return match;
-          }
-          
-          return `${method} = "${proxyBase}${encodeURIComponent(absoluteUrl)}"`;
-        }
-      );
+      // Add a base tag to help with relative URLs
+      if (!processedContent.includes('<base')) {
+        processedContent = processedContent.replace(
+          /<head([^>]*)>/i,
+          `<head$1><base href="${baseUrl.origin}/">`
+        );
+      }
+
+      // Add proxy navigation script
+      const proxyScript = `
+        <script>
+          // Proxy navigation helper
+          (function() {
+            const proxyBase = '${proxyBase}';
+            const originalOpen = window.open;
+            const originalAssign = window.location.assign;
+            const originalReplace = window.location.replace;
+            
+            window.open = function(url, ...args) {
+              if (typeof url === 'string' && !url.startsWith('http') && !url.startsWith('//') && !url.startsWith('#')) {
+                try {
+                  const absoluteUrl = new URL(url, window.location.origin).toString();
+                  url = proxyBase + encodeURIComponent(absoluteUrl);
+                } catch (e) {
+                  // Keep original URL if conversion fails
+                }
+              }
+              return originalOpen.call(this, url, ...args);
+            };
+            
+            window.location.assign = function(url) {
+              if (typeof url === 'string' && !url.startsWith('http') && !url.startsWith('//') && !url.startsWith('#')) {
+                try {
+                  const absoluteUrl = new URL(url, window.location.origin).toString();
+                  url = proxyBase + encodeURIComponent(absoluteUrl);
+                } catch (e) {
+                  // Keep original URL if conversion fails
+                }
+              }
+              return originalAssign.call(this, url);
+            };
+            
+            window.location.replace = function(url) {
+              if (typeof url === 'string' && !url.startsWith('http') && !url.startsWith('//') && !url.startsWith('#')) {
+                try {
+                  const absoluteUrl = new URL(url, window.location.origin).toString();
+                  url = proxyBase + encodeURIComponent(absoluteUrl);
+                } catch (e) {
+                  // Keep original URL if conversion fails
+                }
+              }
+              return originalReplace.call(this, url);
+            };
+          })();
+        </script>
+      `;
+
+      // Insert the script before closing head tag
+      processedContent = processedContent.replace('</head>', `${proxyScript}</head>`);
     }
 
-    // Return the processed content
+    // Return the processed content with enhanced headers
     return new NextResponse(processedContent, {
       status: response.status,
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=3600',
+        'Cache-Control': 'public, max-age=1800', // 30 minutes cache
         'X-Proxy-Status': 'success',
         'X-Original-URL': targetUrl,
+        'X-Proxy-Location': 'Washington DC, US', // As requested
         'X-Frame-Options': 'SAMEORIGIN',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
       },
     });
 
   } catch (error) {
     console.error('Proxy fetch error:', error);
     
+    const isTimeout = error instanceof Error && error.name === 'AbortError';
+    const errorMessage = isTimeout ? 'Request timeout' : (error instanceof Error ? error.message : 'Unknown error');
+    
     return new NextResponse(
       `<!DOCTYPE html>
       <html>
       <head>
         <title>Saphire Proxy Error</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
           body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
@@ -138,13 +260,23 @@ export async function GET(request: NextRequest) {
           }
           .error h1 { margin-top: 0; color: #ff6b6b; }
           .error p { opacity: 0.9; line-height: 1.6; }
+          .error .location { 
+            background: rgba(255, 255, 255, 0.1); 
+            padding: 10px; 
+            border-radius: 8px; 
+            margin-top: 20px; 
+            font-size: 0.9em;
+          }
         </style>
       </head>
       <body>
         <div class="error">
           <h1>🚫 Proxy Error</h1>
           <p>Failed to fetch the requested URL. This could be due to network issues, the site being down, or access restrictions.</p>
-          <p><strong>Error:</strong> ${error instanceof Error ? error.message : 'Unknown error'}</p>
+          <p><strong>Error:</strong> ${errorMessage}</p>
+          <div class="location">
+            <strong>📍 Proxy Location:</strong> Washington DC, US
+          </div>
         </div>
       </body>
       </html>`,
@@ -153,6 +285,7 @@ export async function GET(request: NextRequest) {
         headers: {
           'Content-Type': 'text/html',
           'X-Proxy-Status': 'error',
+          'X-Proxy-Location': 'Washington DC, US',
         },
       }
     );

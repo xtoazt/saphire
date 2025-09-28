@@ -20,9 +20,20 @@ interface ChatMessage {
   timestamp: Date;
 }
 
+interface ProxyInfo {
+  proxyUrl: string;
+  originalUrl: string;
+  message: string;
+  enhanced: boolean;
+  location: string;
+  features: string[];
+  supportedSites: string[];
+}
+
 export default function Home() {
   const [url, setUrl] = useState("");
   const [proxyUrl, setProxyUrl] = useState("");
+  const [proxyInfo, setProxyInfo] = useState<ProxyInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -45,6 +56,7 @@ export default function Home() {
       
       const data = await response.json();
       setProxyUrl(data.proxyUrl);
+      setProxyInfo(data);
     } catch (error) {
       console.error('Proxy request failed:', error);
     } finally {
@@ -196,12 +208,23 @@ export default function Home() {
                   </Button>
                 </div>
                 
-                {proxyUrl && (
-                  <div className="space-y-3">
-                    <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
-                      Proxy URL Generated
-                    </Badge>
-                    <div className="bg-slate-900/50 rounded-lg p-4 space-y-2">
+                {proxyUrl && proxyInfo && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
+                        Proxy URL Generated
+                      </Badge>
+                      {proxyInfo.enhanced && (
+                        <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                          Enhanced for Google Services
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className="text-slate-300 border-slate-600">
+                        📍 {proxyInfo.location}
+                      </Badge>
+                    </div>
+                    
+                    <div className="bg-slate-900/50 rounded-lg p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <p className="text-sm text-slate-300">Proxy URL:</p>
                         <Button
@@ -216,6 +239,32 @@ export default function Home() {
                       <code className="text-green-400 text-sm break-all bg-slate-800/50 p-2 rounded block">
                         {proxyUrl}
                       </code>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h4 className="text-sm font-semibold text-white mb-2">✨ Features:</h4>
+                          <ul className="text-xs text-slate-300 space-y-1">
+                            {proxyInfo.features?.slice(0, 3).map((feature: string, index: number) => (
+                              <li key={index} className="flex items-center gap-2">
+                                <div className="w-1 h-1 bg-purple-400 rounded-full"></div>
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-white mb-2">🌐 Supported Sites:</h4>
+                          <ul className="text-xs text-slate-300 space-y-1">
+                            {proxyInfo.supportedSites?.slice(0, 3).map((site: string, index: number) => (
+                              <li key={index} className="flex items-center gap-2">
+                                <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
+                                {site}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                      
                       <Button
                         onClick={() => window.open(proxyUrl, '_blank')}
                         className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
