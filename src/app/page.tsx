@@ -36,18 +36,16 @@ interface ProxyInfo {
 
 
 export default function Home() {
-  const [url, setUrl] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [proxyUrl, setProxyUrl] = useState("");
   const [proxyInfo, setProxyInfo] = useState<ProxyInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [selectedServer, setSelectedServer] = useState<ServerConfig>(REAL_SERVERS[0]);
+  const [selectedServer, setSelectedServer] = useState<ServerConfig>(REAL_SERVERS.find(s => s.id === 'washington-dc') || REAL_SERVERS[0]);
   const [availableServers, setAvailableServers] = useState<ServerConfig[]>([]);
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
@@ -96,13 +94,23 @@ export default function Home() {
     checkServerHealth();
   }, [checkServerHealth]);
 
-  const handleGoogleSearch = async () => {
+  const handleUnifiedProxy = async () => {
     if (!searchQuery.trim()) return;
     
     setIsSearching(true);
     try {
-      // Create Google search URL
-      const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+      // Determine if it's a URL or search query
+      let targetUrl: string;
+      let isSearch = false;
+      
+      if (searchQuery.startsWith('http://') || searchQuery.startsWith('https://')) {
+        // It's a direct URL
+        targetUrl = searchQuery;
+      } else {
+        // It's a search query - create Google search URL
+        targetUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+        isSearch = true;
+      }
       
       // Generate proxy URL based on server type
       let proxyUrl: string;
@@ -113,7 +121,7 @@ export default function Home() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            url: googleSearchUrl, 
+            url: targetUrl, 
             serverLocation: selectedServer.id,
             region: selectedServer.region 
           }),
@@ -124,120 +132,52 @@ export default function Home() {
         // Use external proxy services
         switch (selectedServer.id) {
           case 'allorigins':
-            proxyUrl = `${selectedServer.endpoint}?url=${encodeURIComponent(googleSearchUrl)}`;
+            proxyUrl = `${selectedServer.endpoint}?url=${encodeURIComponent(targetUrl)}`;
             break;
           case 'cors-anywhere':
           case 'cors-everywhere':
-            proxyUrl = `${selectedServer.endpoint}/${googleSearchUrl}`;
+            proxyUrl = `${selectedServer.endpoint}/${targetUrl}`;
             break;
           case 'thingproxy':
-            proxyUrl = `${selectedServer.endpoint}/${googleSearchUrl}`;
+            proxyUrl = `${selectedServer.endpoint}/${targetUrl}`;
             break;
           case 'proxy-cors':
-            proxyUrl = `${selectedServer.endpoint}/${googleSearchUrl}`;
+            proxyUrl = `${selectedServer.endpoint}/${targetUrl}`;
             break;
           case 'cors-proxy':
-            proxyUrl = `${selectedServer.endpoint}/?${googleSearchUrl}`;
+            proxyUrl = `${selectedServer.endpoint}/?${targetUrl}`;
             break;
           case 'yacdn':
-            proxyUrl = `${selectedServer.endpoint}/${googleSearchUrl}`;
+            proxyUrl = `${selectedServer.endpoint}/${targetUrl}`;
             break;
           default:
-            proxyUrl = `${selectedServer.endpoint}/${googleSearchUrl}`;
+            proxyUrl = `${selectedServer.endpoint}/${targetUrl}`;
         }
       }
+      
+      // Instantly open the proxy URL
+      window.open(proxyUrl, '_blank');
       
       setProxyUrl(proxyUrl);
       setProxyInfo({
         proxyUrl,
-        originalUrl: googleSearchUrl,
-        message: 'Search proxy URL created successfully',
-        enhanced: true,
+        originalUrl: targetUrl,
+        message: 'Opened successfully',
+        enhanced: isSearch,
         location: `${selectedServer.name}, ${selectedServer.country}`,
         features: selectedServer.features,
-        supportedSites: ['Google services', 'Search results', 'Web content'],
-        searchQuery: searchQuery,
-        serverEndpoint: selectedServer.endpoint,
-        serverRegion: selectedServer.region
-      });
-    } catch (error) {
-      console.error('Google search failed:', error);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleProxyRequest = async () => {
-    if (!url) return;
-    
-    setIsLoading(true);
-    try {
-      let proxyUrl: string;
-      let proxyInfo: ProxyInfo;
-      
-      if (selectedServer.id === 'washington-dc') {
-        // Use our custom proxy
-        const response = await fetch('/api/proxy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            url, 
-            serverLocation: selectedServer.id,
-            region: selectedServer.region 
-          }),
-        });
-        const data = await response.json();
-        proxyUrl = data.proxyUrl;
-        proxyInfo = data;
-      } else {
-        // Use external proxy services
-        switch (selectedServer.id) {
-          case 'allorigins':
-            proxyUrl = `${selectedServer.endpoint}?url=${encodeURIComponent(url)}`;
-            break;
-          case 'cors-anywhere':
-          case 'cors-everywhere':
-            proxyUrl = `${selectedServer.endpoint}/${url}`;
-            break;
-          case 'thingproxy':
-            proxyUrl = `${selectedServer.endpoint}/${url}`;
-            break;
-          case 'proxy-cors':
-            proxyUrl = `${selectedServer.endpoint}/${url}`;
-            break;
-          case 'cors-proxy':
-            proxyUrl = `${selectedServer.endpoint}/?${url}`;
-            break;
-          case 'yacdn':
-            proxyUrl = `${selectedServer.endpoint}/${url}`;
-            break;
-          default:
-            proxyUrl = `${selectedServer.endpoint}/${url}`;
-        }
-        
-        proxyInfo = {
-          proxyUrl,
-          originalUrl: url,
-          message: 'Proxy URL created successfully',
-          enhanced: false,
-          location: `${selectedServer.name}, ${selectedServer.country}`,
-          features: selectedServer.features,
-          supportedSites: ['Web content', 'APIs', 'Resources']
-        };
-      }
-      
-      setProxyUrl(proxyUrl);
-      setProxyInfo({
-        ...proxyInfo,
+        supportedSites: isSearch ? ['Google services', 'Search results', 'Web content'] : ['Web content', 'APIs', 'Resources'],
+        searchQuery: isSearch ? searchQuery : undefined,
         serverEndpoint: selectedServer.endpoint,
         serverRegion: selectedServer.region
       });
     } catch (error) {
       console.error('Proxy request failed:', error);
     } finally {
-      setIsLoading(false);
+      setIsSearching(false);
     }
   };
+
 
   const handleChatSubmit = async () => {
     if (!chatMessage.trim()) return;
@@ -423,13 +363,9 @@ export default function Home() {
         {/* Main Content */}
         <div className="w-full h-full">
           <Tabs defaultValue="search" className="w-full h-full">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-900 border-gray-700">
+          <TabsList className="grid w-full grid-cols-3 bg-gray-900 border-gray-700">
             <TabsTrigger value="search" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono">
               <Globe className="w-4 h-4 mr-2" />
-              Search
-            </TabsTrigger>
-            <TabsTrigger value="proxy" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono">
-              <Settings className="w-4 h-4 mr-2" />
               Proxy
             </TabsTrigger>
             <TabsTrigger value="api" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono">
@@ -447,27 +383,27 @@ export default function Home() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2 font-mono">
                   <Globe className="w-5 h-5" />
-                  Undetectable Google Search
+                  Undetectable Proxy
                 </CardTitle>
                 <CardDescription className="text-gray-400 font-mono">
-                  Search the web undetected through our Windows 10 64-bit proxy
+                  Search or browse the web undetected through our Windows 10 64-bit proxy
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Search Google..."
+                    placeholder="Search or enter URL..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleGoogleSearch()}
+                    onKeyPress={(e) => e.key === 'Enter' && handleUnifiedProxy()}
                     className="bg-black border-gray-600 text-white placeholder-gray-500 font-mono"
                   />
                   <Button
-                    onClick={handleGoogleSearch}
+                    onClick={handleUnifiedProxy}
                     disabled={isSearching || !searchQuery.trim()}
                     className="bg-white text-black hover:bg-gray-200 font-mono"
                   >
-                    {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
+                    {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Go"}
                   </Button>
                 </div>
 
@@ -556,111 +492,6 @@ export default function Home() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="proxy" className="mt-6">
-            <Card className="bg-gray-900 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2 font-mono">
-                  <Globe className="w-4 h-4" />
-                  Undetectable Web Proxy
-                </CardTitle>
-                <CardDescription className="text-gray-400 font-mono text-sm">
-                  Access any website undetected through our Windows 10 64-bit proxy
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Input
-                    type="url"
-                    placeholder="https://example.com"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    className="flex-1 bg-black border-gray-600 text-white placeholder:text-gray-500 focus:border-white font-mono"
-                  />
-                  <Button
-                    onClick={handleProxyRequest}
-                    disabled={isLoading || !url}
-                    className="bg-white text-black hover:bg-gray-200 font-mono"
-                  >
-                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "PROXY"}
-                  </Button>
-                </div>
-                
-                {proxyUrl && proxyInfo && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="bg-green-900 text-green-400 border-green-700 font-mono text-xs">
-                        READY
-                      </Badge>
-                      {proxyInfo.enhanced && (
-                        <Badge variant="secondary" className="bg-blue-900 text-blue-400 border-blue-700 font-mono text-xs">
-                          GOOGLE+
-                        </Badge>
-                      )}
-                      <Badge variant="outline" className="text-gray-300 border-gray-600 font-mono text-xs">
-                        {proxyInfo.location}
-                      </Badge>
-                    </div>
-                    
-                    <div className="bg-black border border-gray-700 rounded p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-300 font-mono">PROXY_URL:</p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard(proxyUrl)}
-                          className="text-gray-400 hover:text-white font-mono text-xs"
-                        >
-                          {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                        </Button>
-                      </div>
-                      <code className="text-green-400 text-sm break-all bg-gray-900 p-3 rounded block font-mono border border-gray-800">
-                        {proxyUrl}
-            </code>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                        <div>
-                          <h4 className="text-sm font-semibold text-white mb-2 font-mono">UNDETECTABLE FEATURES:</h4>
-                          <ul className="text-gray-300 space-y-1 font-mono">
-                            {proxyInfo.features?.slice(0, 3).map((feature: string, index: number) => (
-                              <li key={index} className="flex items-center gap-2">
-                                <span className="text-white">•</span>
-                                {feature}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-semibold text-white mb-2 font-mono">PROXY STATUS:</h4>
-                          <ul className="text-gray-300 space-y-1 font-mono">
-                            <li className="flex items-center gap-2">
-                              <span className="text-green-400">✓</span>
-                              Windows 10 64-bit Active
-                            </li>
-                            <li className="flex items-center gap-2">
-                              <span className="text-green-400">✓</span>
-                              JavaScript Engine Ready
-          </li>
-                            <li className="flex items-center gap-2">
-                              <span className="text-green-400">✓</span>
-                              Proxy Processing
-          </li>
-                          </ul>
-                        </div>
-                      </div>
-                      
-                      <Button
-                        onClick={() => window.open(proxyUrl, '_blank')}
-                        className="w-full bg-white text-black hover:bg-gray-200 font-mono"
-                      >
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        OPEN_PROXY
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="api" className="mt-6">
             <Card className="bg-gray-900 border-gray-700">
