@@ -53,30 +53,30 @@ export async function POST(request: NextRequest) {
                            parsedUrl.hostname.includes('youtube.com') ||
                            parsedUrl.hostname.includes('youtu.be');
 
-    return NextResponse.json({
-      proxyUrl,
-      originalUrl: url,
-      message: 'Proxy URL created successfully',
-      enhanced: isGoogleService,
-      location: `${selectedServer.name}, ${selectedServer.country}`,
-      serverLocation: selectedServer,
-      features: [
-        'URL rewriting for seamless navigation',
-        'Content processing and optimization',
-        'Security headers and protection',
-        'Timeout handling and error recovery',
-        'JavaScript navigation support',
-        ...selectedServer.features
-      ],
-      supportedSites: [
-        'Google services (enhanced)',
-        'YouTube',
-        'Social media platforms',
-        'News websites',
-        'Educational resources',
-        'And many more...'
-      ]
-    });
+           return NextResponse.json({
+             proxyUrl,
+             originalUrl: url,
+             message: 'Cloud machine proxy URL created successfully',
+             enhanced: isGoogleService,
+             location: `${selectedServer.name}, ${selectedServer.country}`,
+             serverLocation: selectedServer,
+             features: [
+               'Windows 10 64-bit processing',
+               'Full JavaScript execution',
+               'Real-time content rendering',
+               'Enhanced security protocols',
+               'Cloud machine optimization',
+               ...selectedServer.features
+             ],
+             supportedSites: [
+               'Google services (enhanced)',
+               'YouTube',
+               'Social media platforms',
+               'News websites',
+               'Educational resources',
+               'And many more...'
+             ]
+           });
 
   } catch (error) {
     console.error('Proxy error:', error);

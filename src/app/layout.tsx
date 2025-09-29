@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Saphire - AI Web Proxy",
-  description: "Saphire - Beautiful web proxy with AI integration powered by HeroUI",
+  title: "Saphire - Cloud Machine & Web Proxy",
+  description: "Saphire - Windows 10 64-bit cloud machine with web proxy and AI integration",
 };
 
 export default function RootLayout({

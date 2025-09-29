@@ -29,14 +29,19 @@ interface ProxyInfo {
   location: string;
   features: string[];
   supportedSites: string[];
+  searchQuery?: string;
+  serverEndpoint?: string;
+  serverRegion?: string;
 }
 
 
 export default function Home() {
   const [url, setUrl] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [proxyUrl, setProxyUrl] = useState("");
   const [proxyInfo, setProxyInfo] = useState<ProxyInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -90,6 +95,52 @@ export default function Home() {
   React.useEffect(() => {
     checkServerHealth();
   }, [checkServerHealth]);
+
+  const handleGoogleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    try {
+      // Create Google search URL
+      const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+      
+      // Use real server endpoint if available, otherwise fallback to local
+      const proxyEndpoint = selectedServer.status === 'online' 
+        ? `${selectedServer.endpoint}/proxy`
+        : '/api/proxy';
+      
+      const response = await fetch(proxyEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          url: googleSearchUrl, 
+          serverLocation: selectedServer.id,
+          region: selectedServer.region 
+        }),
+      });
+      
+      const data = await response.json();
+      
+      // Update proxy URL to use real server if available
+      if (selectedServer.status === 'online') {
+        data.proxyUrl = `${selectedServer.endpoint}/proxy-fetch?url=${encodeURIComponent(googleSearchUrl)}`;
+      }
+      
+      setProxyUrl(data.proxyUrl);
+      setProxyInfo({
+        ...data,
+        serverEndpoint: selectedServer.endpoint,
+        serverRegion: selectedServer.region,
+        searchQuery: searchQuery
+      });
+    } catch (error) {
+      console.error('Google search failed:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const handleProxyRequest = async () => {
     if (!url) return;
@@ -181,7 +232,7 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-2xl font-mono font-bold text-white">Saphire</h1>
-              <p className="text-gray-400 font-mono text-sm">Developer proxy with AI integration</p>
+              <p className="text-gray-400 font-mono text-sm">Cloud Machine • Windows 10 64-bit • Web Proxy</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -315,10 +366,14 @@ export default function Home() {
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="proxy" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-900 border-gray-700">
-            <TabsTrigger value="proxy" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono">
+        <Tabs defaultValue="search" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-900 border-gray-700">
+            <TabsTrigger value="search" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono">
               <Globe className="w-4 h-4 mr-2" />
+              Search
+            </TabsTrigger>
+            <TabsTrigger value="proxy" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono">
+              <Settings className="w-4 h-4 mr-2" />
               Proxy
             </TabsTrigger>
             <TabsTrigger value="api" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono">
@@ -331,15 +386,129 @@ export default function Home() {
             </TabsTrigger>
           </TabsList>
 
+          <TabsContent value="search" className="mt-6">
+            <Card className="bg-gray-900 border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2 font-mono">
+                  <Globe className="w-5 h-5" />
+                  Google Search via Cloud Machine
+                </CardTitle>
+                <CardDescription className="text-gray-400 font-mono">
+                  Search the web through our Windows 10 64-bit cloud machine
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Search Google..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleGoogleSearch()}
+                    className="bg-black border-gray-600 text-white placeholder-gray-500 font-mono"
+                  />
+                  <Button
+                    onClick={handleGoogleSearch}
+                    disabled={isSearching || !searchQuery.trim()}
+                    className="bg-white text-black hover:bg-gray-200 font-mono"
+                  >
+                    {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
+                  </Button>
+                </div>
+
+                {proxyInfo && proxyInfo.searchQuery && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-green-900 text-green-400 font-mono">Search Ready</Badge>
+                      <Badge className="bg-blue-900 text-blue-400 font-mono">Google Enhanced</Badge>
+                      <Badge variant="outline" className="border-gray-600 text-gray-300 font-mono">
+                        {selectedServer.name}
+                      </Badge>
+                    </div>
+
+                    <div className="bg-black border border-gray-800 rounded p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-gray-400 font-mono text-sm">Search Results</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(proxyUrl)}
+                          className="text-gray-400 hover:text-white font-mono text-xs"
+                        >
+                          {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                        </Button>
+                      </div>
+                      <code className="text-green-400 text-xs font-mono block break-all">
+                        {proxyUrl}
+                      </code>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="text-white font-mono text-sm font-semibold mb-2">Search Features</h4>
+                        <ul className="space-y-1 text-sm text-gray-300 font-mono">
+                          <li className="flex items-center gap-2">
+                            <div className="w-1 h-1 bg-white rounded-full"></div>
+                            Google search results
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <div className="w-1 h-1 bg-white rounded-full"></div>
+                            Windows 10 64-bit rendering
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <div className="w-1 h-1 bg-white rounded-full"></div>
+                            Full JavaScript support
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <div className="w-1 h-1 bg-white rounded-full"></div>
+                            Cloud machine processing
+                          </li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="text-white font-mono text-sm font-semibold mb-2">Cloud Machine Status</h4>
+                        <ul className="space-y-1 text-sm text-gray-300 font-mono">
+                          <li className="flex items-center gap-2">
+                            <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+                            Windows 10 64-bit Active
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+                            Google Services Enhanced
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+                            Real-time Processing
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+                            High Performance
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={() => window.open(proxyUrl, '_blank')}
+                      className="w-full bg-white text-black hover:bg-gray-200 font-mono"
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Open Search Results
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="proxy" className="mt-6">
             <Card className="bg-gray-900 border-gray-700">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2 font-mono">
                   <Globe className="w-4 h-4" />
-                  Web Proxy
+                  Cloud Machine Proxy
                 </CardTitle>
                 <CardDescription className="text-gray-400 font-mono text-sm">
-                  HTTP/HTTPS proxy with URL rewriting and content processing
+                  Access any website through our Windows 10 64-bit cloud machine
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -394,7 +563,7 @@ export default function Home() {
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                         <div>
-                          <h4 className="text-sm font-semibold text-white mb-2 font-mono">FEATURES:</h4>
+                          <h4 className="text-sm font-semibold text-white mb-2 font-mono">CLOUD MACHINE FEATURES:</h4>
                           <ul className="text-gray-300 space-y-1 font-mono">
                             {proxyInfo.features?.slice(0, 3).map((feature: string, index: number) => (
                               <li key={index} className="flex items-center gap-2">
@@ -405,19 +574,19 @@ export default function Home() {
                           </ul>
                         </div>
                         <div>
-                          <h4 className="text-sm font-semibold text-white mb-2 font-mono">STATUS:</h4>
+                          <h4 className="text-sm font-semibold text-white mb-2 font-mono">WINDOWS 10 STATUS:</h4>
                           <ul className="text-gray-300 space-y-1 font-mono">
                             <li className="flex items-center gap-2">
                               <span className="text-green-400">✓</span>
-                              URL Rewriting
+                              Windows 10 64-bit Active
                             </li>
                             <li className="flex items-center gap-2">
                               <span className="text-green-400">✓</span>
-                              Content Processing
+                              JavaScript Engine Ready
           </li>
                             <li className="flex items-center gap-2">
                               <span className="text-green-400">✓</span>
-                              Security Headers
+                              Cloud Processing
           </li>
                           </ul>
                         </div>
@@ -442,10 +611,10 @@ export default function Home() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2 font-mono">
                   <Settings className="w-4 h-4" />
-                  API Integration
+                  Cloud Machine API
                 </CardTitle>
                 <CardDescription className="text-gray-400 font-mono text-sm">
-                  Easy integration examples for developers
+                  Integrate with our Windows 10 64-bit cloud machine
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">

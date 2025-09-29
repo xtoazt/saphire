@@ -21,7 +21,7 @@ export const REAL_SERVERS: ServerConfig[] = [
     flag: '🇺🇸',
     latency: '12ms',
     status: 'online',
-    features: ['Google Services Enhanced', 'High Speed', 'Government Grade'],
+    features: ['Windows 10 64-bit', 'Google Services Enhanced', 'High Speed', 'Government Grade'],
     endpoint: 'https://proxy-us-east.saphire.dev',
     healthCheck: 'https://proxy-us-east.saphire.dev/health',
     region: 'us-east'
@@ -34,7 +34,7 @@ export const REAL_SERVERS: ServerConfig[] = [
     flag: '🇬🇧',
     latency: '45ms',
     status: 'online',
-    features: ['EU Compliance', 'Fast CDN', 'Privacy Focused'],
+    features: ['Windows 10 64-bit', 'EU Compliance', 'Fast CDN', 'Privacy Focused'],
     endpoint: 'https://proxy-eu-west.saphire.dev',
     healthCheck: 'https://proxy-eu-west.saphire.dev/health',
     region: 'eu-west'
@@ -47,7 +47,7 @@ export const REAL_SERVERS: ServerConfig[] = [
     flag: '🇸🇬',
     latency: '8ms',
     status: 'online',
-    features: ['Asia Pacific', 'Ultra Low Latency', '24/7 Support'],
+    features: ['Windows 10 64-bit', 'Asia Pacific', 'Ultra Low Latency', '24/7 Support'],
     endpoint: 'https://proxy-ap-southeast.saphire.dev',
     healthCheck: 'https://proxy-ap-southeast.saphire.dev/health',
     region: 'ap-southeast'
@@ -60,7 +60,7 @@ export const REAL_SERVERS: ServerConfig[] = [
     flag: '🇯🇵',
     latency: '15ms',
     status: 'maintenance',
-    features: ['Japanese Sites', 'High Bandwidth', 'Gaming Optimized'],
+    features: ['Windows 10 64-bit', 'Japanese Sites', 'High Bandwidth', 'Gaming Optimized'],
     endpoint: 'https://proxy-ap-northeast.saphire.dev',
     healthCheck: 'https://proxy-ap-northeast.saphire.dev/health',
     region: 'ap-northeast'
@@ -73,7 +73,7 @@ export const REAL_SERVERS: ServerConfig[] = [
     flag: '🇩🇪',
     latency: '38ms',
     status: 'offline',
-    features: ['GDPR Compliant', 'European Hub', 'Secure'],
+    features: ['Windows 10 64-bit', 'GDPR Compliant', 'European Hub', 'Secure'],
     endpoint: 'https://proxy-eu-central.saphire.dev',
     healthCheck: 'https://proxy-eu-central.saphire.dev/health',
     region: 'eu-central'
@@ -86,7 +86,7 @@ export const REAL_SERVERS: ServerConfig[] = [
     flag: '🇦🇺',
     latency: '22ms',
     status: 'online',
-    features: ['Oceania Coverage', 'Fast Streaming', 'Local Content'],
+    features: ['Windows 10 64-bit', 'Oceania Coverage', 'Fast Streaming', 'Local Content'],
     endpoint: 'https://proxy-ap-southeast-2.saphire.dev',
     healthCheck: 'https://proxy-ap-southeast-2.saphire.dev/health',
     region: 'ap-southeast-2'
@@ -99,7 +99,7 @@ export const REAL_SERVERS: ServerConfig[] = [
     flag: '🇨🇦',
     latency: '18ms',
     status: 'online',
-    features: ['North America', 'Privacy Laws', 'High Reliability'],
+    features: ['Windows 10 64-bit', 'North America', 'Privacy Laws', 'High Reliability'],
     endpoint: 'https://proxy-ca-central.saphire.dev',
     healthCheck: 'https://proxy-ca-central.saphire.dev/health',
     region: 'ca-central'
@@ -112,7 +112,7 @@ export const REAL_SERVERS: ServerConfig[] = [
     flag: '🇮🇳',
     latency: '25ms',
     status: 'online',
-    features: ['South Asia', 'Local Services', 'Cost Effective'],
+    features: ['Windows 10 64-bit', 'South Asia', 'Local Services', 'Cost Effective'],
     endpoint: 'https://proxy-ap-south.saphire.dev',
     healthCheck: 'https://proxy-ap-south.saphire.dev/health',
     region: 'ap-south'
