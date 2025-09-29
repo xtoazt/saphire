@@ -111,18 +111,8 @@ export default function Home() {
         isSearch = true;
       }
       
-      // Use Saphire Server proxy
-      const response = await fetch('/api/proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          url: targetUrl, 
-          serverLocation: selectedServer.id,
-          region: selectedServer.region 
-        }),
-      });
-      const data = await response.json();
-      const proxyUrl = data.proxyUrl;
+      // Create simple proxy URL directly
+      const proxyUrl = `${window.location.origin}/api/proxy-fetch?url=${encodeURIComponent(targetUrl)}`;
       
       // Instantly open the proxy URL
       window.open(proxyUrl, '_blank');
