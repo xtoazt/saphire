@@ -104,36 +104,61 @@ export default function Home() {
       // Create Google search URL
       const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
       
-      // Use real server endpoint if available, otherwise fallback to local
-      const proxyEndpoint = selectedServer.status === 'online' 
-        ? `${selectedServer.endpoint}/proxy`
-        : '/api/proxy';
+      // Generate proxy URL based on server type
+      let proxyUrl: string;
       
-      const response = await fetch(proxyEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          url: googleSearchUrl, 
-          serverLocation: selectedServer.id,
-          region: selectedServer.region 
-        }),
-      });
-      
-      const data = await response.json();
-      
-      // Update proxy URL to use real server if available
-      if (selectedServer.status === 'online') {
-        data.proxyUrl = `${selectedServer.endpoint}/proxy-fetch?url=${encodeURIComponent(googleSearchUrl)}`;
+      if (selectedServer.id === 'washington-dc') {
+        // Use our custom proxy
+        const response = await fetch('/api/proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            url: googleSearchUrl, 
+            serverLocation: selectedServer.id,
+            region: selectedServer.region 
+          }),
+        });
+        const data = await response.json();
+        proxyUrl = data.proxyUrl;
+      } else {
+        // Use external proxy services
+        switch (selectedServer.id) {
+          case 'allorigins':
+            proxyUrl = `${selectedServer.endpoint}?url=${encodeURIComponent(googleSearchUrl)}`;
+            break;
+          case 'cors-anywhere':
+          case 'cors-everywhere':
+            proxyUrl = `${selectedServer.endpoint}/${googleSearchUrl}`;
+            break;
+          case 'thingproxy':
+            proxyUrl = `${selectedServer.endpoint}/${googleSearchUrl}`;
+            break;
+          case 'proxy-cors':
+            proxyUrl = `${selectedServer.endpoint}/${googleSearchUrl}`;
+            break;
+          case 'cors-proxy':
+            proxyUrl = `${selectedServer.endpoint}/?${googleSearchUrl}`;
+            break;
+          case 'yacdn':
+            proxyUrl = `${selectedServer.endpoint}/${googleSearchUrl}`;
+            break;
+          default:
+            proxyUrl = `${selectedServer.endpoint}/${googleSearchUrl}`;
+        }
       }
       
-      setProxyUrl(data.proxyUrl);
+      setProxyUrl(proxyUrl);
       setProxyInfo({
-        ...data,
+        proxyUrl,
+        originalUrl: googleSearchUrl,
+        message: 'Search proxy URL created successfully',
+        enhanced: true,
+        location: `${selectedServer.name}, ${selectedServer.country}`,
+        features: selectedServer.features,
+        supportedSites: ['Google services', 'Search results', 'Web content'],
+        searchQuery: searchQuery,
         serverEndpoint: selectedServer.endpoint,
-        serverRegion: selectedServer.region,
-        searchQuery: searchQuery
+        serverRegion: selectedServer.region
       });
     } catch (error) {
       console.error('Google search failed:', error);
@@ -147,33 +172,63 @@ export default function Home() {
     
     setIsLoading(true);
     try {
-      // Use real server endpoint if available, otherwise fallback to local
-      const proxyEndpoint = selectedServer.status === 'online' 
-        ? `${selectedServer.endpoint}/proxy`
-        : '/api/proxy';
+      let proxyUrl: string;
+      let proxyInfo: ProxyInfo;
       
-      const response = await fetch(proxyEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          url, 
-          serverLocation: selectedServer.id,
-          region: selectedServer.region 
-        }),
-      });
-      
-      const data = await response.json();
-      
-      // Update proxy URL to use real server if available
-      if (selectedServer.status === 'online') {
-        data.proxyUrl = `${selectedServer.endpoint}/proxy-fetch?url=${encodeURIComponent(url)}`;
+      if (selectedServer.id === 'washington-dc') {
+        // Use our custom proxy
+        const response = await fetch('/api/proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            url, 
+            serverLocation: selectedServer.id,
+            region: selectedServer.region 
+          }),
+        });
+        const data = await response.json();
+        proxyUrl = data.proxyUrl;
+        proxyInfo = data;
+      } else {
+        // Use external proxy services
+        switch (selectedServer.id) {
+          case 'allorigins':
+            proxyUrl = `${selectedServer.endpoint}?url=${encodeURIComponent(url)}`;
+            break;
+          case 'cors-anywhere':
+          case 'cors-everywhere':
+            proxyUrl = `${selectedServer.endpoint}/${url}`;
+            break;
+          case 'thingproxy':
+            proxyUrl = `${selectedServer.endpoint}/${url}`;
+            break;
+          case 'proxy-cors':
+            proxyUrl = `${selectedServer.endpoint}/${url}`;
+            break;
+          case 'cors-proxy':
+            proxyUrl = `${selectedServer.endpoint}/?${url}`;
+            break;
+          case 'yacdn':
+            proxyUrl = `${selectedServer.endpoint}/${url}`;
+            break;
+          default:
+            proxyUrl = `${selectedServer.endpoint}/${url}`;
+        }
+        
+        proxyInfo = {
+          proxyUrl,
+          originalUrl: url,
+          message: 'Proxy URL created successfully',
+          enhanced: false,
+          location: `${selectedServer.name}, ${selectedServer.country}`,
+          features: selectedServer.features,
+          supportedSites: ['Web content', 'APIs', 'Resources']
+        };
       }
       
-      setProxyUrl(data.proxyUrl);
+      setProxyUrl(proxyUrl);
       setProxyInfo({
-        ...data,
+        ...proxyInfo,
         serverEndpoint: selectedServer.endpoint,
         serverRegion: selectedServer.region
       });
@@ -382,7 +437,7 @@ export default function Home() {
             </TabsTrigger>
             <TabsTrigger value="chat" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono">
               <MessageCircle className="w-4 h-4 mr-2" />
-              AI
+              Chat
             </TabsTrigger>
           </TabsList>
 
@@ -805,10 +860,10 @@ export function useProxy() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2 font-mono">
                   <MessageCircle className="w-4 h-4" />
-                  AI Assistant
+                  Chat Assistant
                 </CardTitle>
                 <CardDescription className="text-gray-400 font-mono text-sm">
-                  LLM7.io powered AI chat for developers
+                  Chat feature for developers
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
