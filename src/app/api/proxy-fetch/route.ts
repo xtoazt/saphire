@@ -170,24 +170,61 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      // Add proxy navigation script
+      // Add enhanced undetectable proxy navigation script
       const proxyScript = `
         <script>
-          // Proxy navigation helper
+          // Enhanced undetectable proxy navigation
           (function() {
             const proxyBase = '${proxyBase}';
+            const currentServer = '${serverLocation}';
             const originalOpen = window.open;
             const originalAssign = window.location.assign;
             const originalReplace = window.location.replace;
+
+            // Override link clicks to stay within proxy
+            document.addEventListener('click', function(e) {
+              const target = e.target.closest('a');
+              if (target && target.href) {
+                e.preventDefault();
+                const url = target.href;
+                if (!url.startsWith('http') && !url.startsWith('//') && !url.startsWith('#')) {
+                  try {
+                    const absoluteUrl = new URL(url, window.location.origin).toString();
+                    const proxyUrl = proxyBase + encodeURIComponent(absoluteUrl) + '&server=' + currentServer;
+                    window.location.href = proxyUrl;
+                  } catch (e) {
+                    window.location.href = url;
+                  }
+                } else if (!url.includes(proxyBase.split('/api/')[0])) {
+                  // External link - proxy it
+                  const proxyUrl = proxyBase + encodeURIComponent(url) + '&server=' + currentServer;
+                  window.location.href = proxyUrl;
+                }
+              }
+            }, true);
+
+            // Override form submissions
+            document.addEventListener('submit', function(e) {
+              const form = e.target;
+              if (form.action && !form.action.includes(proxyBase.split('/api/')[0])) {
+                e.preventDefault();
+                const proxyUrl = proxyBase + encodeURIComponent(form.action) + '&server=' + currentServer;
+                form.action = proxyUrl;
+                form.submit();
+              }
+            }, true);
             
             window.open = function(url, ...args) {
               if (typeof url === 'string' && !url.startsWith('http') && !url.startsWith('//') && !url.startsWith('#')) {
                 try {
                   const absoluteUrl = new URL(url, window.location.origin).toString();
-                  url = proxyBase + encodeURIComponent(absoluteUrl);
+                  url = proxyBase + encodeURIComponent(absoluteUrl) + '&server=' + currentServer;
                 } catch (e) {
                   // Keep original URL if conversion fails
                 }
+              } else if (typeof url === 'string' && !url.includes(proxyBase.split('/api/')[0])) {
+                // External URL - proxy it
+                url = proxyBase + encodeURIComponent(url) + '&server=' + currentServer;
               }
               return originalOpen.call(this, url, ...args);
             };
@@ -196,10 +233,13 @@ export async function GET(request: NextRequest) {
               if (typeof url === 'string' && !url.startsWith('http') && !url.startsWith('//') && !url.startsWith('#')) {
                 try {
                   const absoluteUrl = new URL(url, window.location.origin).toString();
-                  url = proxyBase + encodeURIComponent(absoluteUrl);
+                  url = proxyBase + encodeURIComponent(absoluteUrl) + '&server=' + currentServer;
                 } catch (e) {
                   // Keep original URL if conversion fails
                 }
+              } else if (typeof url === 'string' && !url.includes(proxyBase.split('/api/')[0])) {
+                // External URL - proxy it
+                url = proxyBase + encodeURIComponent(url) + '&server=' + currentServer;
               }
               return originalAssign.call(this, url);
             };
@@ -208,10 +248,13 @@ export async function GET(request: NextRequest) {
               if (typeof url === 'string' && !url.startsWith('http') && !url.startsWith('//') && !url.startsWith('#')) {
                 try {
                   const absoluteUrl = new URL(url, window.location.origin).toString();
-                  url = proxyBase + encodeURIComponent(absoluteUrl);
+                  url = proxyBase + encodeURIComponent(absoluteUrl) + '&server=' + currentServer;
                 } catch (e) {
                   // Keep original URL if conversion fails
                 }
+              } else if (typeof url === 'string' && !url.includes(proxyBase.split('/api/')[0])) {
+                // External URL - proxy it
+                url = proxyBase + encodeURIComponent(url) + '&server=' + currentServer;
               }
               return originalReplace.call(this, url);
             };

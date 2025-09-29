@@ -279,15 +279,15 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full px-4 py-4">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-white text-black rounded flex items-center justify-center font-mono text-sm font-bold">
               S
             </div>
             <div>
-              <h1 className="text-2xl font-mono font-bold text-white">Saphire</h1>
-              <p className="text-gray-400 font-mono text-sm">Cloud Machine • Windows 10 64-bit • Web Proxy</p>
+              <h1 className="text-3xl font-mono font-bold text-white">Saphire</h1>
+              <p className="text-gray-400 font-mono text-sm">Undetectable • Windows 10 64-bit • Cloud Machine</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -421,7 +421,8 @@ export default function Home() {
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="search" className="w-full">
+        <div className="w-full h-full">
+          <Tabs defaultValue="search" className="w-full h-full">
           <TabsList className="grid w-full grid-cols-4 bg-gray-900 border-gray-700">
             <TabsTrigger value="search" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono">
               <Globe className="w-4 h-4 mr-2" />
@@ -446,10 +447,10 @@ export default function Home() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2 font-mono">
                   <Globe className="w-5 h-5" />
-                  Google Search via Cloud Machine
+                  Undetectable Google Search
                 </CardTitle>
                 <CardDescription className="text-gray-400 font-mono">
-                  Search the web through our Windows 10 64-bit cloud machine
+                  Search the web undetected through our Windows 10 64-bit cloud machine
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -499,11 +500,11 @@ export default function Home() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <h4 className="text-white font-mono text-sm font-semibold mb-2">Search Features</h4>
+                        <h4 className="text-white font-mono text-sm font-semibold mb-2">Undetectable Features</h4>
                         <ul className="space-y-1 text-sm text-gray-300 font-mono">
                           <li className="flex items-center gap-2">
                             <div className="w-1 h-1 bg-white rounded-full"></div>
-                            Google search results
+                            Completely undetectable browsing
                           </li>
                           <li className="flex items-center gap-2">
                             <div className="w-1 h-1 bg-white rounded-full"></div>
@@ -515,7 +516,7 @@ export default function Home() {
                           </li>
                           <li className="flex items-center gap-2">
                             <div className="w-1 h-1 bg-white rounded-full"></div>
-                            Cloud machine processing
+                            No tracking or logging
                           </li>
                         </ul>
                       </div>
@@ -560,10 +561,10 @@ export default function Home() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2 font-mono">
                   <Globe className="w-4 h-4" />
-                  Cloud Machine Proxy
+                  Undetectable Web Proxy
                 </CardTitle>
                 <CardDescription className="text-gray-400 font-mono text-sm">
-                  Access any website through our Windows 10 64-bit cloud machine
+                  Access any website undetected through our Windows 10 64-bit cloud machine
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -618,7 +619,7 @@ export default function Home() {
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                         <div>
-                          <h4 className="text-sm font-semibold text-white mb-2 font-mono">CLOUD MACHINE FEATURES:</h4>
+                          <h4 className="text-sm font-semibold text-white mb-2 font-mono">UNDETECTABLE FEATURES:</h4>
                           <ul className="text-gray-300 space-y-1 font-mono">
                             {proxyInfo.features?.slice(0, 3).map((feature: string, index: number) => (
                               <li key={index} className="flex items-center gap-2">
@@ -945,6 +946,7 @@ export function useProxy() {
             </Card>
           </TabsContent>
         </Tabs>
+        </div>
       </div>
     </div>
   );
