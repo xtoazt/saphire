@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,8 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Globe, MessageCircle, Settings, ExternalLink, Copy, Check, Loader2, MapPin } from "lucide-react";
+import { Globe, MessageCircle, Settings, ExternalLink, Copy, Check, Loader2, MapPin, RefreshCw } from "lucide-react";
+import { REAL_SERVERS, type ServerConfig } from '@/lib/servers';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -30,99 +31,6 @@ interface ProxyInfo {
   supportedSites: string[];
 }
 
-interface ServerLocation {
-  id: string;
-  name: string;
-  city: string;
-  country: string;
-  flag: string;
-  latency: string;
-  status: 'online' | 'offline' | 'maintenance';
-  features: string[];
-}
-
-const SERVER_LOCATIONS: ServerLocation[] = [
-  {
-    id: 'washington-dc',
-    name: 'Washington DC',
-    city: 'Washington DC',
-    country: 'United States',
-    flag: '🇺🇸',
-    latency: '12ms',
-    status: 'online',
-    features: ['Google Services Enhanced', 'High Speed', 'Government Grade']
-  },
-  {
-    id: 'london',
-    name: 'London',
-    city: 'London',
-    country: 'United Kingdom',
-    flag: '🇬🇧',
-    latency: '45ms',
-    status: 'online',
-    features: ['EU Compliance', 'Fast CDN', 'Privacy Focused']
-  },
-  {
-    id: 'singapore',
-    name: 'Singapore',
-    city: 'Singapore',
-    country: 'Singapore',
-    flag: '🇸🇬',
-    latency: '8ms',
-    status: 'online',
-    features: ['Asia Pacific', 'Ultra Low Latency', '24/7 Support']
-  },
-  {
-    id: 'tokyo',
-    name: 'Tokyo',
-    city: 'Tokyo',
-    country: 'Japan',
-    flag: '🇯🇵',
-    latency: '15ms',
-    status: 'online',
-    features: ['Japanese Sites', 'High Bandwidth', 'Gaming Optimized']
-  },
-  {
-    id: 'frankfurt',
-    name: 'Frankfurt',
-    city: 'Frankfurt',
-    country: 'Germany',
-    flag: '🇩🇪',
-    latency: '38ms',
-    status: 'online',
-    features: ['GDPR Compliant', 'European Hub', 'Secure']
-  },
-  {
-    id: 'sydney',
-    name: 'Sydney',
-    city: 'Sydney',
-    country: 'Australia',
-    flag: '🇦🇺',
-    latency: '22ms',
-    status: 'online',
-    features: ['Oceania Coverage', 'Fast Streaming', 'Local Content']
-  },
-  {
-    id: 'toronto',
-    name: 'Toronto',
-    city: 'Toronto',
-    country: 'Canada',
-    flag: '🇨🇦',
-    latency: '18ms',
-    status: 'online',
-    features: ['North America', 'Privacy Laws', 'High Reliability']
-  },
-  {
-    id: 'mumbai',
-    name: 'Mumbai',
-    city: 'Mumbai',
-    country: 'India',
-    flag: '🇮🇳',
-    latency: '25ms',
-    status: 'online',
-    features: ['South Asia', 'Local Services', 'Cost Effective']
-  }
-];
 
 export default function Home() {
   const [url, setUrl] = useState("");
@@ -134,7 +42,9 @@ export default function Home() {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [selectedServer, setSelectedServer] = useState<ServerLocation>(SERVER_LOCATIONS[0]);
+  const [selectedServer, setSelectedServer] = useState<ServerConfig>(REAL_SERVERS[0]);
+  const [availableServers, setAvailableServers] = useState<ServerConfig[]>([]);
+  const [isCheckingHealth, setIsCheckingHealth] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
 
   // Set base URL on client side
@@ -142,22 +52,80 @@ export default function Home() {
     setBaseUrl(window.location.origin);
   }, []);
 
+  const checkServerHealth = useCallback(async () => {
+    setIsCheckingHealth(true);
+    try {
+      const response = await fetch('/api/health');
+      const data = await response.json();
+      
+      if (data.status === 'ok') {
+        // Update available servers
+        const servers = REAL_SERVERS.map(server => {
+          const healthData = data.allServers.find((s: { id: string; status: string }) => s.id === server.id);
+          return {
+            ...server,
+            status: healthData ? healthData.status as 'online' | 'offline' | 'maintenance' : 'offline'
+          };
+        });
+        
+        setAvailableServers(servers);
+        
+        // If current server is offline, switch to first available server
+        const currentServerHealth = servers.find(s => s.id === selectedServer.id);
+        if (currentServerHealth?.status !== 'online') {
+          const firstOnline = servers.find(s => s.status === 'online');
+          if (firstOnline) {
+            setSelectedServer(firstOnline);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check server health:', error);
+    } finally {
+      setIsCheckingHealth(false);
+    }
+  }, [selectedServer.id]);
+
+  // Check server health on component mount
+  React.useEffect(() => {
+    checkServerHealth();
+  }, [checkServerHealth]);
+
   const handleProxyRequest = async () => {
     if (!url) return;
     
     setIsLoading(true);
     try {
-      const response = await fetch('/api/proxy', {
+      // Use real server endpoint if available, otherwise fallback to local
+      const proxyEndpoint = selectedServer.status === 'online' 
+        ? `${selectedServer.endpoint}/proxy`
+        : '/api/proxy';
+      
+      const response = await fetch(proxyEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url, serverLocation: selectedServer.id }),
+        body: JSON.stringify({ 
+          url, 
+          serverLocation: selectedServer.id,
+          region: selectedServer.region 
+        }),
       });
       
       const data = await response.json();
+      
+      // Update proxy URL to use real server if available
+      if (selectedServer.status === 'online') {
+        data.proxyUrl = `${selectedServer.endpoint}/proxy-fetch?url=${encodeURIComponent(url)}`;
+      }
+      
       setProxyUrl(data.proxyUrl);
-      setProxyInfo(data);
+      setProxyInfo({
+        ...data,
+        serverEndpoint: selectedServer.endpoint,
+        serverRegion: selectedServer.region
+      });
     } catch (error) {
       console.error('Proxy request failed:', error);
     } finally {
@@ -218,9 +186,22 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-3 py-1 bg-gray-900 border border-gray-700 rounded">
+              <div className={`w-2 h-2 rounded-full ${
+                selectedServer.status === 'online' ? 'bg-green-500' : 
+                selectedServer.status === 'maintenance' ? 'bg-yellow-500' : 'bg-red-500'
+              }`}></div>
               <span className="text-sm font-mono">{selectedServer.name}</span>
               <span className="text-xs text-gray-400 font-mono">{selectedServer.latency}</span>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={checkServerHealth}
+              disabled={isCheckingHealth}
+              className="text-gray-400 hover:text-white font-mono text-xs"
+            >
+              {isCheckingHealth ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+            </Button>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-400 font-mono">Dark</span>
               <Switch
@@ -261,18 +242,24 @@ export default function Home() {
                     </div>
                     <ScrollArea className="h-64 w-full">
                       <div className="space-y-2">
-                        {SERVER_LOCATIONS.map((server) => (
+                        {(availableServers.length > 0 ? availableServers : REAL_SERVERS).map((server) => (
                           <div
                             key={server.id}
-                            className={`p-3 rounded border cursor-pointer transition-all ${
-                              selectedServer.id === server.id
-                                ? 'bg-white text-black'
-                                : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
+                            className={`p-3 rounded border transition-all ${
+                              server.status === 'online' 
+                                ? selectedServer.id === server.id
+                                  ? 'bg-white text-black cursor-pointer'
+                                  : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 cursor-pointer'
+                                : 'bg-gray-900 border-gray-800 text-gray-500 cursor-not-allowed opacity-50'
                             }`}
-                            onClick={() => setSelectedServer(server)}
+                            onClick={() => server.status === 'online' && setSelectedServer(server)}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
+                                <div className={`w-2 h-2 rounded-full ${
+                                  server.status === 'online' ? 'bg-green-500' : 
+                                  server.status === 'maintenance' ? 'bg-yellow-500' : 'bg-red-500'
+                                }`}></div>
                                 <span className="text-sm font-mono">{server.name}</span>
                                 <div className="text-xs opacity-75 font-mono">
                                   {server.city}, {server.country}
@@ -295,6 +282,11 @@ export default function Home() {
                                 </Badge>
                               ))}
                             </div>
+                            {server.status === 'online' && (
+                              <div className="mt-2 text-xs text-gray-400 font-mono">
+                                Endpoint: {server.endpoint}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -466,7 +458,7 @@ export default function Home() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => copyToClipboard(`const proxyUrl = '${baseUrl}/api/proxy-fetch?url=';
+                        onClick={() => copyToClipboard(`const proxyUrl = '${selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url=';
 
 async function proxyRequest(url) {
   const response = await fetch(proxyUrl + encodeURIComponent(url));
@@ -482,7 +474,7 @@ proxyRequest('https://example.com').then(html => {
                         <Copy className="w-3 h-3" />
                       </Button>
                     </div>
-                    <code className="text-green-400 text-xs font-mono block whitespace-pre-wrap">{`const proxyUrl = '${baseUrl}/api/proxy-fetch?url=';
+                    <code className="text-green-400 text-xs font-mono block whitespace-pre-wrap">{`const proxyUrl = '${selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url=';
 
 async function proxyRequest(url) {
   const response = await fetch(proxyUrl + encodeURIComponent(url));
@@ -508,7 +500,7 @@ proxyRequest('https://example.com').then(html => {
                         onClick={() => copyToClipboard(`import requests
 from urllib.parse import quote
 
-PROXY_BASE = '${baseUrl}/api/proxy-fetch?url='
+PROXY_BASE = '${selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url='
 
 def proxy_request(url):
     response = requests.get(PROXY_BASE + quote(url))
@@ -525,7 +517,7 @@ print(html)`)}
                     <code className="text-green-400 text-xs font-mono block whitespace-pre-wrap">{`import requests
 from urllib.parse import quote
 
-PROXY_BASE = '${baseUrl}/api/proxy-fetch?url='
+PROXY_BASE = '${selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url='
 
 def proxy_request(url):
     response = requests.get(PROXY_BASE + quote(url))
@@ -546,13 +538,13 @@ print(html)`}</code>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => copyToClipboard(`curl "${baseUrl}/api/proxy-fetch?url=https://example.com"`)}
+                        onClick={() => copyToClipboard(`curl "${selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url=https://example.com"`)}
                         className="text-gray-400 hover:text-white font-mono text-xs"
                       >
                         <Copy className="w-3 h-3" />
                       </Button>
                     </div>
-                    <code className="text-green-400 text-xs font-mono block">{`curl "${baseUrl}/api/proxy-fetch?url=https://example.com"`}</code>
+                    <code className="text-green-400 text-xs font-mono block">{`curl "${selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url=https://example.com"`}</code>
                   </div>
                 </div>
 
@@ -575,7 +567,7 @@ export function useProxy() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(\`${baseUrl}/api/proxy-fetch?url=\${encodeURIComponent(url)}\`);
+      const response = await fetch(\`${selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url=\${encodeURIComponent(url)}\`);
       return await response.text();
     } catch (err) {
       setError(err.message);
@@ -602,7 +594,7 @@ export function useProxy() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(\`${baseUrl}/api/proxy-fetch?url=\${encodeURIComponent(url)}\`);
+      const response = await fetch(\`${selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url=\${encodeURIComponent(url)}\`);
       return await response.text();
     } catch (err) {
       setError(err.message);
@@ -623,11 +615,11 @@ export function useProxy() {
                   <div className="bg-black border border-gray-700 rounded p-4 space-y-2">
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="bg-green-900 text-green-400 border-green-700 font-mono text-xs">GET</Badge>
-                      <code className="text-white font-mono text-xs">{baseUrl}/api/proxy-fetch?url=</code>
+                      <code className="text-white font-mono text-xs">{selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url=</code>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="bg-blue-900 text-blue-400 border-blue-700 font-mono text-xs">POST</Badge>
-                      <code className="text-white font-mono text-xs">{baseUrl}/api/proxy</code>
+                      <code className="text-white font-mono text-xs">{selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy</code>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="bg-purple-900 text-purple-400 border-purple-700 font-mono text-xs">POST</Badge>
