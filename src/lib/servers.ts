@@ -15,7 +15,7 @@ export interface ServerConfig {
 export const REAL_SERVERS: ServerConfig[] = [
   {
     id: 'washington-dc',
-    name: 'Washington DC',
+    name: 'Saphire Server',
     city: 'Washington DC',
     country: 'United States',
     flag: '🇺🇸',

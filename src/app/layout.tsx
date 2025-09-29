@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Saphire - Undetectable Web Proxy",
-  description: "Saphire - Undetectable Windows 10 64-bit cloud machine with web proxy and chat features",
+  description: "Saphire - Undetectable Windows 10 64-bit proxy with web proxy and chat features",
 };
 
 export default function RootLayout({

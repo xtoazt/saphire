@@ -287,7 +287,7 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-3xl font-mono font-bold text-white">Saphire</h1>
-              <p className="text-gray-400 font-mono text-sm">Undetectable • Windows 10 64-bit • Cloud Machine</p>
+              <p className="text-gray-400 font-mono text-sm">Undetectable • Windows 10 64-bit • Proxy</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -450,7 +450,7 @@ export default function Home() {
                   Undetectable Google Search
                 </CardTitle>
                 <CardDescription className="text-gray-400 font-mono">
-                  Search the web undetected through our Windows 10 64-bit cloud machine
+                  Search the web undetected through our Windows 10 64-bit proxy
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -521,7 +521,7 @@ export default function Home() {
                         </ul>
                       </div>
                       <div>
-                        <h4 className="text-white font-mono text-sm font-semibold mb-2">Cloud Machine Status</h4>
+                        <h4 className="text-white font-mono text-sm font-semibold mb-2">Proxy Status</h4>
                         <ul className="space-y-1 text-sm text-gray-300 font-mono">
                           <li className="flex items-center gap-2">
                             <div className="w-1 h-1 bg-green-500 rounded-full"></div>
@@ -564,7 +564,7 @@ export default function Home() {
                   Undetectable Web Proxy
                 </CardTitle>
                 <CardDescription className="text-gray-400 font-mono text-sm">
-                  Access any website undetected through our Windows 10 64-bit cloud machine
+                  Access any website undetected through our Windows 10 64-bit proxy
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -630,7 +630,7 @@ export default function Home() {
                           </ul>
                         </div>
                         <div>
-                          <h4 className="text-sm font-semibold text-white mb-2 font-mono">WINDOWS 10 STATUS:</h4>
+                          <h4 className="text-sm font-semibold text-white mb-2 font-mono">PROXY STATUS:</h4>
                           <ul className="text-gray-300 space-y-1 font-mono">
                             <li className="flex items-center gap-2">
                               <span className="text-green-400">✓</span>
@@ -642,7 +642,7 @@ export default function Home() {
           </li>
                             <li className="flex items-center gap-2">
                               <span className="text-green-400">✓</span>
-                              Cloud Processing
+                              Proxy Processing
           </li>
                           </ul>
                         </div>
@@ -667,10 +667,10 @@ export default function Home() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2 font-mono">
                   <Settings className="w-4 h-4" />
-                  Cloud Machine API
+                  Proxy API
                 </CardTitle>
                 <CardDescription className="text-gray-400 font-mono text-sm">
-                  Integrate with our Windows 10 64-bit cloud machine
+                  Integrate with our Windows 10 64-bit proxy
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">

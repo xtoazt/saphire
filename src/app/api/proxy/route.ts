@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
            return NextResponse.json({
              proxyUrl,
              originalUrl: url,
-             message: 'Cloud machine proxy URL created successfully',
+             message: 'Undetectable proxy URL created successfully',
              enhanced: isGoogleService,
              location: `${selectedServer.name}, ${selectedServer.country}`,
              serverLocation: selectedServer,
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
                'Full JavaScript execution',
                'Real-time content rendering',
                'Enhanced security protocols',
-               'Cloud machine optimization',
+               'Undetectable proxy optimization',
                ...selectedServer.features
              ],
              supportedSites: [
