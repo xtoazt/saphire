@@ -358,7 +358,7 @@ export default function Home() {
                   </Button>
                 </div>
 
-                {proxyInfo && proxyInfo.searchQuery && (
+                {proxyInfo && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
                       <Badge className="bg-green-900 text-green-400 font-mono">Search Ready</Badge>

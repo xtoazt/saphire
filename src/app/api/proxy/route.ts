@@ -44,8 +44,8 @@ export async function POST(request: NextRequest) {
 
     const selectedServer = serverLocations[serverLocation] || serverLocations['washington-dc'];
     
-    // Create a proxy endpoint with server location
-    const proxyUrl = `${request.nextUrl.origin}/api/proxy-fetch?url=${encodeURIComponent(url)}&server=${serverLocation}`;
+    // Create a proxy endpoint without server parameter
+    const proxyUrl = `${request.nextUrl.origin}/api/proxy-fetch?url=${encodeURIComponent(url)}`;
     
     // Check if it's a Google service for enhanced functionality
     const isGoogleService = parsedUrl.hostname.includes('google.com') || 

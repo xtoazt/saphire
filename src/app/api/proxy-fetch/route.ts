@@ -5,7 +5,6 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const targetUrl = searchParams.get('url');
-    const serverLocation = searchParams.get('server') || 'washington-dc';
     
     if (!targetUrl) {
       return new NextResponse('URL parameter is required', { status: 400 });
@@ -33,19 +32,8 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Access to local/private networks is not allowed', { status: 403 });
     }
 
-    // Server location mapping
-    const serverLocations: Record<string, { name: string; country: string; flag: string }> = {
-      'washington-dc': { name: 'Washington DC', country: 'United States', flag: '🇺🇸' },
-      'london': { name: 'London', country: 'United Kingdom', flag: '🇬🇧' },
-      'singapore': { name: 'Singapore', country: 'Singapore', flag: '🇸🇬' },
-      'tokyo': { name: 'Tokyo', country: 'Japan', flag: '🇯🇵' },
-      'frankfurt': { name: 'Frankfurt', country: 'Germany', flag: '🇩🇪' },
-      'sydney': { name: 'Sydney', country: 'Australia', flag: '🇦🇺' },
-      'toronto': { name: 'Toronto', country: 'Canada', flag: '🇨🇦' },
-      'mumbai': { name: 'Mumbai', country: 'India', flag: '🇮🇳' }
-    };
-
-    const selectedServer = serverLocations[serverLocation] || serverLocations['washington-dc'];
+    // Default server info
+    const selectedServer = { name: 'Saphire Server', country: 'United States', flag: '🇺🇸' };
 
     // Enhanced headers for better compatibility
     const headers: HeadersInit = {
@@ -176,7 +164,6 @@ export async function GET(request: NextRequest) {
           // Enhanced undetectable proxy navigation
           (function() {
             const proxyBase = '${proxyBase}';
-            const currentServer = '${serverLocation}';
             const originalOpen = window.open;
             const originalAssign = window.location.assign;
             const originalReplace = window.location.replace;
@@ -190,14 +177,14 @@ export async function GET(request: NextRequest) {
                 if (!url.startsWith('http') && !url.startsWith('//') && !url.startsWith('#')) {
                   try {
                     const absoluteUrl = new URL(url, window.location.origin).toString();
-                    const proxyUrl = proxyBase + encodeURIComponent(absoluteUrl) + '&server=' + currentServer;
+                    const proxyUrl = proxyBase + encodeURIComponent(absoluteUrl);
                     window.location.href = proxyUrl;
                   } catch (e) {
                     window.location.href = url;
                   }
                 } else if (!url.includes(proxyBase.split('/api/')[0])) {
                   // External link - proxy it
-                  const proxyUrl = proxyBase + encodeURIComponent(url) + '&server=' + currentServer;
+                  const proxyUrl = proxyBase + encodeURIComponent(url);
                   window.location.href = proxyUrl;
                 }
               }
@@ -208,7 +195,7 @@ export async function GET(request: NextRequest) {
               const form = e.target;
               if (form.action && !form.action.includes(proxyBase.split('/api/')[0])) {
                 e.preventDefault();
-                const proxyUrl = proxyBase + encodeURIComponent(form.action) + '&server=' + currentServer;
+                const proxyUrl = proxyBase + encodeURIComponent(form.action);
                 form.action = proxyUrl;
                 form.submit();
               }
@@ -218,13 +205,13 @@ export async function GET(request: NextRequest) {
               if (typeof url === 'string' && !url.startsWith('http') && !url.startsWith('//') && !url.startsWith('#')) {
                 try {
                   const absoluteUrl = new URL(url, window.location.origin).toString();
-                  url = proxyBase + encodeURIComponent(absoluteUrl) + '&server=' + currentServer;
+                  url = proxyBase + encodeURIComponent(absoluteUrl) + ';
                 } catch (e) {
                   // Keep original URL if conversion fails
                 }
               } else if (typeof url === 'string' && !url.includes(proxyBase.split('/api/')[0])) {
                 // External URL - proxy it
-                url = proxyBase + encodeURIComponent(url) + '&server=' + currentServer;
+                url = proxyBase + encodeURIComponent(url) + ';
               }
               return originalOpen.call(this, url, ...args);
             };
@@ -233,13 +220,13 @@ export async function GET(request: NextRequest) {
               if (typeof url === 'string' && !url.startsWith('http') && !url.startsWith('//') && !url.startsWith('#')) {
                 try {
                   const absoluteUrl = new URL(url, window.location.origin).toString();
-                  url = proxyBase + encodeURIComponent(absoluteUrl) + '&server=' + currentServer;
+                  url = proxyBase + encodeURIComponent(absoluteUrl) + ';
                 } catch (e) {
                   // Keep original URL if conversion fails
                 }
               } else if (typeof url === 'string' && !url.includes(proxyBase.split('/api/')[0])) {
                 // External URL - proxy it
-                url = proxyBase + encodeURIComponent(url) + '&server=' + currentServer;
+                url = proxyBase + encodeURIComponent(url) + ';
               }
               return originalAssign.call(this, url);
             };
@@ -248,13 +235,13 @@ export async function GET(request: NextRequest) {
               if (typeof url === 'string' && !url.startsWith('http') && !url.startsWith('//') && !url.startsWith('#')) {
                 try {
                   const absoluteUrl = new URL(url, window.location.origin).toString();
-                  url = proxyBase + encodeURIComponent(absoluteUrl) + '&server=' + currentServer;
+                  url = proxyBase + encodeURIComponent(absoluteUrl) + ';
                 } catch (e) {
                   // Keep original URL if conversion fails
                 }
               } else if (typeof url === 'string' && !url.includes(proxyBase.split('/api/')[0])) {
                 // External URL - proxy it
-                url = proxyBase + encodeURIComponent(url) + '&server=' + currentServer;
+                url = proxyBase + encodeURIComponent(url) + ';
               }
               return originalReplace.call(this, url);
             };
@@ -275,7 +262,7 @@ export async function GET(request: NextRequest) {
         'X-Proxy-Status': 'success',
         'X-Original-URL': targetUrl,
         'X-Proxy-Location': `${selectedServer.name}, ${selectedServer.country}`,
-        'X-Proxy-Server': serverLocation,
+        'X-Proxy-Server': 'saphire',
         'X-Frame-Options': 'SAMEORIGIN',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
@@ -289,20 +276,8 @@ export async function GET(request: NextRequest) {
     const isTimeout = error instanceof Error && error.name === 'AbortError';
     const errorMessage = isTimeout ? 'Request timeout' : (error instanceof Error ? error.message : 'Unknown error');
     
-    // Get server location for error response
-    const { searchParams } = new URL(request.url);
-    const serverLocation = searchParams.get('server') || 'washington-dc';
-    const serverLocations: Record<string, { name: string; country: string; flag: string }> = {
-      'washington-dc': { name: 'Washington DC', country: 'United States', flag: '🇺🇸' },
-      'london': { name: 'London', country: 'United Kingdom', flag: '🇬🇧' },
-      'singapore': { name: 'Singapore', country: 'Singapore', flag: '🇸🇬' },
-      'tokyo': { name: 'Tokyo', country: 'Japan', flag: '🇯🇵' },
-      'frankfurt': { name: 'Frankfurt', country: 'Germany', flag: '🇩🇪' },
-      'sydney': { name: 'Sydney', country: 'Australia', flag: '🇦🇺' },
-      'toronto': { name: 'Toronto', country: 'Canada', flag: '🇨🇦' },
-      'mumbai': { name: 'Mumbai', country: 'India', flag: '🇮🇳' }
-    };
-    const selectedServer = serverLocations[serverLocation] || serverLocations['washington-dc'];
+    // Default server info for error response
+    const selectedServer = { name: 'Saphire Server', country: 'United States', flag: '🇺🇸' };
     
     return new NextResponse(
       `<!DOCTYPE html>
