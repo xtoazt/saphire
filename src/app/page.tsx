@@ -188,15 +188,15 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <div className="w-full px-4 py-4">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-white text-black rounded flex items-center justify-center font-mono text-sm font-bold">
+      <div className="w-full px-6 py-6">
+        <div className="flex justify-between items-center mb-12">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-white text-black rounded-lg flex items-center justify-center font-mono text-lg font-bold shadow-lg">
               S
             </div>
             <div>
-              <h1 className="text-3xl font-mono font-bold text-white">Saphire</h1>
-              <p className="text-gray-400 font-mono text-sm">Undetectable • Windows 10 64-bit • Proxy</p>
+              <h1 className="text-4xl font-mono font-bold text-white">Saphire</h1>
+              <p className="text-gray-300 font-mono text-base">Undetectable • Windows 10 64-bit • Proxy</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -312,49 +312,49 @@ export default function Home() {
         </div>
 
         {/* Main Content */}
-        <div className="w-full h-full">
+        <div className="w-full min-h-[calc(100vh-200px)]">
           <Tabs defaultValue="search" className="w-full h-full">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-900 border-gray-700">
-            <TabsTrigger value="search" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono">
-              <Globe className="w-4 h-4 mr-2" />
-              Proxy
+          <TabsList className="grid w-full grid-cols-3 bg-gray-900 border-gray-700 mb-8">
+            <TabsTrigger value="search" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono text-base py-3">
+              <Globe className="w-5 h-5 mr-2" />
+              Undetectable Proxy
             </TabsTrigger>
-            <TabsTrigger value="api" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono">
-              <Settings className="w-4 h-4 mr-2" />
-              API
+            <TabsTrigger value="api" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono text-base py-3">
+              <Settings className="w-5 h-5 mr-2" />
+              API Integration
             </TabsTrigger>
-            <TabsTrigger value="chat" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono">
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Chat
+            <TabsTrigger value="chat" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono text-base py-3">
+              <MessageCircle className="w-5 h-5 mr-2" />
+              AI Assistant
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="search" className="mt-6">
             <Card className="bg-gray-900 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2 font-mono">
-                  <Globe className="w-5 h-5" />
+              <CardHeader className="pb-6">
+                <CardTitle className="text-white flex items-center gap-3 font-mono text-2xl">
+                  <Globe className="w-6 h-6" />
                   Undetectable Proxy
                 </CardTitle>
-                <CardDescription className="text-gray-400 font-mono">
-                  Search or browse the web undetected through our Windows 10 64-bit proxy
+                <CardDescription className="text-gray-300 font-mono text-base">
+                  Search or browse the web completely undetected through our secure Windows 10 64-bit proxy
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
+              <CardContent className="space-y-6">
+                <div className="flex gap-3">
                   <Input
                     placeholder="Search or enter URL..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleUnifiedProxy()}
-                    className="bg-black border-gray-600 text-white placeholder-gray-500 font-mono"
+                    className="bg-black border-gray-600 text-white placeholder-gray-500 font-mono text-base py-3 px-4 h-12"
                   />
                   <Button
                     onClick={handleUnifiedProxy}
                     disabled={isSearching || !searchQuery.trim()}
-                    className="bg-white text-black hover:bg-gray-200 font-mono"
+                    className="bg-white text-black hover:bg-gray-200 font-mono text-base px-6 py-3 h-12"
                   >
-                    {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Go"}
+                    {isSearching ? <Loader2 className="w-5 h-5 animate-spin" /> : "Go"}
                   </Button>
                 </div>
 
@@ -385,47 +385,47 @@ export default function Home() {
             </code>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div>
-                        <h4 className="text-white font-mono text-sm font-semibold mb-2">Undetectable Features</h4>
-                        <ul className="space-y-1 text-sm text-gray-300 font-mono">
-                          <li className="flex items-center gap-2">
-                            <div className="w-1 h-1 bg-white rounded-full"></div>
+                        <h4 className="text-white font-mono text-lg font-semibold mb-4">Undetectable Features</h4>
+                        <ul className="space-y-3 text-base text-gray-300 font-mono">
+                          <li className="flex items-center gap-3">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                             Completely undetectable browsing
                           </li>
-                          <li className="flex items-center gap-2">
-                            <div className="w-1 h-1 bg-white rounded-full"></div>
+                          <li className="flex items-center gap-3">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                             Windows 10 64-bit rendering
                           </li>
-                          <li className="flex items-center gap-2">
-                            <div className="w-1 h-1 bg-white rounded-full"></div>
+                          <li className="flex items-center gap-3">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                             Full JavaScript support
                           </li>
-                          <li className="flex items-center gap-2">
-                            <div className="w-1 h-1 bg-white rounded-full"></div>
+                          <li className="flex items-center gap-3">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                             No tracking or logging
                           </li>
                         </ul>
                       </div>
                       <div>
-                        <h4 className="text-white font-mono text-sm font-semibold mb-2">Proxy Status</h4>
-                        <ul className="space-y-1 text-sm text-gray-300 font-mono">
-                          <li className="flex items-center gap-2">
-                            <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+                        <h4 className="text-white font-mono text-lg font-semibold mb-4">Proxy Status</h4>
+                        <ul className="space-y-3 text-base text-gray-300 font-mono">
+                          <li className="flex items-center gap-3">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                             Windows 10 64-bit Active
                           </li>
-                          <li className="flex items-center gap-2">
-                            <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+                          <li className="flex items-center gap-3">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                             Google Services Enhanced
                           </li>
-                          <li className="flex items-center gap-2">
-                            <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+                          <li className="flex items-center gap-3">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                             Real-time Processing
-          </li>
-                          <li className="flex items-center gap-2">
-                            <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+                          </li>
+                          <li className="flex items-center gap-3">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                             High Performance
-          </li>
+                          </li>
                         </ul>
                       </div>
                     </div>
@@ -446,19 +446,19 @@ export default function Home() {
 
           <TabsContent value="api" className="mt-6">
             <Card className="bg-gray-900 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2 font-mono">
-                  <Settings className="w-4 h-4" />
-                  Proxy API
+              <CardHeader className="pb-6">
+                <CardTitle className="text-white flex items-center gap-3 font-mono text-2xl">
+                  <Settings className="w-6 h-6" />
+                  Undetectable Proxy API
                 </CardTitle>
-                <CardDescription className="text-gray-400 font-mono text-sm">
-                  Integrate with our Windows 10 64-bit proxy
+                <CardDescription className="text-gray-300 font-mono text-base">
+                  Integrate with our undetectable Windows 10 64-bit proxy system
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-8">
                 {/* JavaScript/Node.js */}
-                <div className="space-y-3">
-                  <h3 className="text-white font-mono text-sm font-semibold">JavaScript/Node.js</h3>
+                <div className="space-y-4">
+                  <h3 className="text-white font-mono text-lg font-semibold">JavaScript/Node.js</h3>
                   <div className="bg-black border border-gray-700 rounded p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-gray-400 font-mono text-xs">fetch-proxy.js</span>
@@ -496,8 +496,8 @@ proxyRequest('https://example.com').then(html => {
                 </div>
 
                 {/* Python */}
-                <div className="space-y-3">
-                  <h3 className="text-white font-mono text-sm font-semibold">Python</h3>
+                <div className="space-y-4">
+                  <h3 className="text-white font-mono text-lg font-semibold">Python</h3>
                   <div className="bg-black border border-gray-700 rounded p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-gray-400 font-mono text-xs">proxy_client.py</span>
@@ -537,8 +537,8 @@ print(html)`}</code>
                 </div>
 
                 {/* cURL */}
-                <div className="space-y-3">
-                  <h3 className="text-white font-mono text-sm font-semibold">cURL</h3>
+                <div className="space-y-4">
+                  <h3 className="text-white font-mono text-lg font-semibold">cURL</h3>
                   <div className="bg-black border border-gray-700 rounded p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-gray-400 font-mono text-xs">terminal</span>
@@ -556,8 +556,8 @@ print(html)`}</code>
                 </div>
 
                 {/* React Hook */}
-                <div className="space-y-3">
-                  <h3 className="text-white font-mono text-sm font-semibold">React Hook</h3>
+                <div className="space-y-4">
+                  <h3 className="text-white font-mono text-lg font-semibold">React Hook</h3>
                   <div className="bg-black border border-gray-700 rounded p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-gray-400 font-mono text-xs">useProxy.js</span>
@@ -617,8 +617,8 @@ export function useProxy() {
                 </div>
 
                 {/* API Endpoints */}
-                <div className="space-y-3">
-                  <h3 className="text-white font-mono text-sm font-semibold">API Endpoints</h3>
+                <div className="space-y-4">
+                  <h3 className="text-white font-mono text-lg font-semibold">API Endpoints</h3>
                          <div className="bg-black border border-gray-700 rounded p-4 space-y-2">
                            <div className="flex items-center gap-2">
                              <Badge variant="outline" className="bg-green-900 text-green-400 border-green-700 font-mono text-xs">GET</Badge>
@@ -640,16 +640,16 @@ export function useProxy() {
 
           <TabsContent value="chat" className="mt-6">
             <Card className="bg-gray-900 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2 font-mono">
-                  <MessageCircle className="w-4 h-4" />
-                  Chat Assistant
+              <CardHeader className="pb-6">
+                <CardTitle className="text-white flex items-center gap-3 font-mono text-2xl">
+                  <MessageCircle className="w-6 h-6" />
+                  AI Assistant
                 </CardTitle>
-                <CardDescription className="text-gray-400 font-mono text-sm">
-                  Chat feature for developers
+                <CardDescription className="text-gray-300 font-mono text-base">
+                  Chat with our AI assistant for development support
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <ScrollArea className="h-96 w-full rounded-lg border border-gray-700 bg-black p-4">
                   {chatHistory.length === 0 ? (
                     <div className="text-center text-gray-400 py-8">
@@ -707,21 +707,21 @@ export function useProxy() {
                   )}
                 </ScrollArea>
                 
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <Textarea
                     placeholder="Ask the AI assistant..."
                     value={chatMessage}
                     onChange={(e) => setChatMessage(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleChatSubmit())}
-                    className="flex-1 bg-black border-gray-600 text-white placeholder:text-gray-500 focus:border-white resize-none font-mono text-sm"
+                    className="flex-1 bg-black border-gray-600 text-white placeholder:text-gray-500 focus:border-white resize-none font-mono text-base py-3 px-4"
                     rows={1}
                   />
                   <Button
                     onClick={handleChatSubmit}
                     disabled={!chatMessage.trim() || isChatLoading}
-                    className="bg-white text-black hover:bg-gray-200 font-mono"
+                    className="bg-white text-black hover:bg-gray-200 font-mono text-base px-6 py-3"
                   >
-                    SEND
+                    {isChatLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Send"}
                   </Button>
                 </div>
               </CardContent>
