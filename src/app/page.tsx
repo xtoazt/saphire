@@ -45,7 +45,11 @@ export default function Home() {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [selectedServer, setSelectedServer] = useState<ServerConfig>(REAL_SERVERS.find(s => s.id === 'washington-dc') || REAL_SERVERS[0]);
+  const [selectedServer, setSelectedServer] = useState<ServerConfig>(() => {
+    // Always default to Saphire Server (Washington DC)
+    const saphireServer = REAL_SERVERS.find(s => s.id === 'washington-dc');
+    return saphireServer || REAL_SERVERS[0];
+  });
   const [availableServers, setAvailableServers] = useState<ServerConfig[]>([]);
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
@@ -73,12 +77,19 @@ export default function Home() {
         
         setAvailableServers(servers);
         
-        // If current server is offline, switch to first available server
+        // Only switch servers if current server is offline
         const currentServerHealth = servers.find(s => s.id === selectedServer.id);
         if (currentServerHealth?.status !== 'online') {
-          const firstOnline = servers.find(s => s.status === 'online');
-          if (firstOnline) {
-            setSelectedServer(firstOnline);
+          // First try to use Saphire Server if it's online
+          const saphireServer = servers.find(s => s.id === 'washington-dc' && s.status === 'online');
+          if (saphireServer) {
+            setSelectedServer(saphireServer);
+          } else {
+            // Fallback to first available server only if Saphire Server is offline
+            const firstOnline = servers.find(s => s.status === 'online');
+            if (firstOnline) {
+              setSelectedServer(firstOnline);
+            }
           }
         }
       }
