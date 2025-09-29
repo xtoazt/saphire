@@ -50,7 +50,6 @@ export default function Home() {
     const saphireServer = REAL_SERVERS.find(s => s.id === 'washington-dc');
     return saphireServer || REAL_SERVERS[0];
   });
-  const [availableServers, setAvailableServers] = useState<ServerConfig[]>([]);
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
 
@@ -75,22 +74,11 @@ export default function Home() {
           };
         });
         
-        setAvailableServers(servers);
         
-        // Only switch servers if current server is offline
-        const currentServerHealth = servers.find(s => s.id === selectedServer.id);
-        if (currentServerHealth?.status !== 'online') {
-          // First try to use Saphire Server if it's online
-          const saphireServer = servers.find(s => s.id === 'washington-dc' && s.status === 'online');
-          if (saphireServer) {
-            setSelectedServer(saphireServer);
-          } else {
-            // Fallback to first available server only if Saphire Server is offline
-            const firstOnline = servers.find(s => s.status === 'online');
-            if (firstOnline) {
-              setSelectedServer(firstOnline);
-            }
-          }
+        // Update Saphire Server status
+        const saphireServer = servers.find(s => s.id === 'washington-dc');
+        if (saphireServer) {
+          setSelectedServer(saphireServer);
         }
       }
     } catch (error) {
@@ -98,7 +86,7 @@ export default function Home() {
     } finally {
       setIsCheckingHealth(false);
     }
-  }, [selectedServer.id]);
+  }, []); // Remove selectedServer.id dependency
 
   // Check server health on component mount
   React.useEffect(() => {
@@ -123,48 +111,18 @@ export default function Home() {
         isSearch = true;
       }
       
-      // Generate proxy URL based on server type
-      let proxyUrl: string;
-      
-      if (selectedServer.id === 'washington-dc') {
-        // Use our custom proxy
-        const response = await fetch('/api/proxy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            url: targetUrl, 
-            serverLocation: selectedServer.id,
-            region: selectedServer.region 
-          }),
-        });
-        const data = await response.json();
-        proxyUrl = data.proxyUrl;
-      } else {
-        // Use external proxy services
-        switch (selectedServer.id) {
-          case 'allorigins':
-            proxyUrl = `${selectedServer.endpoint}?url=${encodeURIComponent(targetUrl)}`;
-            break;
-          case 'cors-anywhere':
-          case 'cors-everywhere':
-            proxyUrl = `${selectedServer.endpoint}/${targetUrl}`;
-            break;
-          case 'thingproxy':
-            proxyUrl = `${selectedServer.endpoint}/${targetUrl}`;
-            break;
-          case 'proxy-cors':
-            proxyUrl = `${selectedServer.endpoint}/${targetUrl}`;
-            break;
-          case 'cors-proxy':
-            proxyUrl = `${selectedServer.endpoint}/?${targetUrl}`;
-            break;
-          case 'yacdn':
-            proxyUrl = `${selectedServer.endpoint}/${targetUrl}`;
-            break;
-          default:
-            proxyUrl = `${selectedServer.endpoint}/${targetUrl}`;
-        }
-      }
+      // Use Saphire Server proxy
+      const response = await fetch('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          url: targetUrl, 
+          serverLocation: selectedServer.id,
+          region: selectedServer.region 
+        }),
+      });
+      const data = await response.json();
+      const proxyUrl = data.proxyUrl;
       
       // Instantly open the proxy URL
       window.open(proxyUrl, '_blank');
@@ -295,59 +253,41 @@ export default function Home() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-white" />
-                      <span className="text-white font-semibold font-mono">Proxy Server Location</span>
+                      <span className="text-white font-semibold font-mono">Saphire Server Status</span>
                     </div>
-                    <ScrollArea className="h-64 w-full">
-                      <div className="space-y-2">
-                        {(availableServers.length > 0 ? availableServers : REAL_SERVERS).map((server) => (
-                          <div
-                            key={server.id}
-                            className={`p-3 rounded border transition-all ${
-                              server.status === 'online' 
-                                ? selectedServer.id === server.id
-                                  ? 'bg-white text-black cursor-pointer'
-                                  : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 cursor-pointer'
-                                : 'bg-gray-900 border-gray-800 text-gray-500 cursor-not-allowed opacity-50'
-                            }`}
-                            onClick={() => server.status === 'online' && setSelectedServer(server)}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className={`w-2 h-2 rounded-full ${
-                                  server.status === 'online' ? 'bg-green-500' : 
-                                  server.status === 'maintenance' ? 'bg-yellow-500' : 'bg-red-500'
-                                }`}></div>
-                                <span className="text-sm font-mono">{server.name}</span>
-                                <div className="text-xs opacity-75 font-mono">
-                                  {server.city}, {server.country}
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-xs font-medium font-mono">{server.latency}</div>
-                                <div className={`text-xs font-mono ${
-                                  server.status === 'online' ? 'text-green-400' : 
-                                  server.status === 'maintenance' ? 'text-yellow-400' : 'text-red-400'
-                                }`}>
-                                  {server.status}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {server.features.slice(0, 2).map((feature, index) => (
-                                <Badge key={index} variant="secondary" className="text-xs bg-gray-700 text-gray-300 font-mono">
-                                  {feature}
-                                </Badge>
-                              ))}
-                            </div>
-                            {server.status === 'online' && (
-                              <div className="mt-2 text-xs text-gray-400 font-mono">
-                                Endpoint: {server.endpoint}
-                              </div>
-                            )}
+                    <div className="p-4 rounded border bg-gray-800 border-gray-600">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-3 h-3 rounded-full ${
+                            selectedServer.status === 'online' ? 'bg-green-500' : 
+                            selectedServer.status === 'maintenance' ? 'bg-yellow-500' : 'bg-red-500'
+                          }`}></div>
+                          <span className="text-white font-mono font-semibold">{selectedServer.name}</span>
+                          <div className="text-sm text-gray-400 font-mono">
+                            {selectedServer.city}, {selectedServer.country}
                           </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-medium font-mono text-white">{selectedServer.latency}</div>
+                          <div className={`text-sm font-mono ${
+                            selectedServer.status === 'online' ? 'text-green-400' : 
+                            selectedServer.status === 'maintenance' ? 'text-yellow-400' : 'text-red-400'
+                          }`}>
+                            {selectedServer.status}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {selectedServer.features.map((feature, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs bg-gray-700 text-gray-300 font-mono">
+                            {feature}
+                          </Badge>
                         ))}
                       </div>
-                    </ScrollArea>
+                      <div className="text-xs text-gray-400 font-mono">
+                        Endpoint: {selectedServer.endpoint}
+                      </div>
+                    </div>
                   </div>
                   
                   <Separator className="bg-gray-700" />
@@ -442,7 +382,7 @@ export default function Home() {
                       </div>
                       <code className="text-green-400 text-xs font-mono block break-all">
                         {proxyUrl}
-                      </code>
+            </code>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -481,11 +421,11 @@ export default function Home() {
                           <li className="flex items-center gap-2">
                             <div className="w-1 h-1 bg-green-500 rounded-full"></div>
                             Real-time Processing
-                          </li>
+          </li>
                           <li className="flex items-center gap-2">
                             <div className="w-1 h-1 bg-green-500 rounded-full"></div>
                             High Performance
-                          </li>
+          </li>
                         </ul>
                       </div>
                     </div>
@@ -525,7 +465,7 @@ export default function Home() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => copyToClipboard(`const proxyUrl = '${selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url=';
+                        onClick={() => copyToClipboard(`const proxyUrl = '${baseUrl}/api/proxy-fetch?url=';
 
 async function proxyRequest(url) {
   const response = await fetch(proxyUrl + encodeURIComponent(url));
@@ -541,7 +481,7 @@ proxyRequest('https://example.com').then(html => {
                         <Copy className="w-3 h-3" />
                       </Button>
                     </div>
-                    <code className="text-green-400 text-xs font-mono block whitespace-pre-wrap">{`const proxyUrl = '${selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url=';
+                           <code className="text-green-400 text-xs font-mono block whitespace-pre-wrap">{`const proxyUrl = '${baseUrl}/api/proxy-fetch?url=';
 
 async function proxyRequest(url) {
   const response = await fetch(proxyUrl + encodeURIComponent(url));
@@ -564,10 +504,10 @@ proxyRequest('https://example.com').then(html => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => copyToClipboard(`import requests
+                               onClick={() => copyToClipboard(`import requests
 from urllib.parse import quote
 
-PROXY_BASE = '${selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url='
+PROXY_BASE = '${baseUrl}/api/proxy-fetch?url='
 
 def proxy_request(url):
     response = requests.get(PROXY_BASE + quote(url))
@@ -581,10 +521,10 @@ print(html)`)}
                         <Copy className="w-3 h-3" />
                       </Button>
                     </div>
-                    <code className="text-green-400 text-xs font-mono block whitespace-pre-wrap">{`import requests
+                           <code className="text-green-400 text-xs font-mono block whitespace-pre-wrap">{`import requests
 from urllib.parse import quote
 
-PROXY_BASE = '${selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url='
+PROXY_BASE = '${baseUrl}/api/proxy-fetch?url='
 
 def proxy_request(url):
     response = requests.get(PROXY_BASE + quote(url))
@@ -605,13 +545,13 @@ print(html)`}</code>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => copyToClipboard(`curl "${selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url=https://example.com"`)}
+                               onClick={() => copyToClipboard(`curl "${baseUrl}/api/proxy-fetch?url=https://example.com"`)}
                         className="text-gray-400 hover:text-white font-mono text-xs"
                       >
                         <Copy className="w-3 h-3" />
                       </Button>
                     </div>
-                    <code className="text-green-400 text-xs font-mono block">{`curl "${selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url=https://example.com"`}</code>
+                           <code className="text-green-400 text-xs font-mono block">{`curl "${baseUrl}/api/proxy-fetch?url=https://example.com"`}</code>
                   </div>
                 </div>
 
@@ -624,7 +564,7 @@ print(html)`}</code>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => copyToClipboard(`import { useState } from 'react';
+                               onClick={() => copyToClipboard(`import { useState } from 'react';
 
 export function useProxy() {
   const [loading, setLoading] = useState(false);
@@ -634,7 +574,7 @@ export function useProxy() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(\`${selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url=\${encodeURIComponent(url)}\`);
+      const response = await fetch(\`${baseUrl}/api/proxy-fetch?url=\${encodeURIComponent(url)}\`);
       return await response.text();
     } catch (err) {
       setError(err.message);
@@ -651,7 +591,7 @@ export function useProxy() {
                         <Copy className="w-3 h-3" />
                       </Button>
                     </div>
-                    <code className="text-green-400 text-xs font-mono block whitespace-pre-wrap">{`import { useState } from 'react';
+                           <code className="text-green-400 text-xs font-mono block whitespace-pre-wrap">{`import { useState } from 'react';
 
 export function useProxy() {
   const [loading, setLoading] = useState(false);
@@ -661,7 +601,7 @@ export function useProxy() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(\`${selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url=\${encodeURIComponent(url)}\`);
+      const response = await fetch(\`${baseUrl}/api/proxy-fetch?url=\${encodeURIComponent(url)}\`);
       return await response.text();
     } catch (err) {
       setError(err.message);
@@ -679,20 +619,20 @@ export function useProxy() {
                 {/* API Endpoints */}
                 <div className="space-y-3">
                   <h3 className="text-white font-mono text-sm font-semibold">API Endpoints</h3>
-                  <div className="bg-black border border-gray-700 rounded p-4 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-green-900 text-green-400 border-green-700 font-mono text-xs">GET</Badge>
-                      <code className="text-white font-mono text-xs">{selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy-fetch?url=</code>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-blue-900 text-blue-400 border-blue-700 font-mono text-xs">POST</Badge>
-                      <code className="text-white font-mono text-xs">{selectedServer.status === 'online' ? selectedServer.endpoint : baseUrl}/proxy</code>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-purple-900 text-purple-400 border-purple-700 font-mono text-xs">POST</Badge>
-                      <code className="text-white font-mono text-xs">{baseUrl}/api/chat</code>
-                    </div>
-                  </div>
+                         <div className="bg-black border border-gray-700 rounded p-4 space-y-2">
+                           <div className="flex items-center gap-2">
+                             <Badge variant="outline" className="bg-green-900 text-green-400 border-green-700 font-mono text-xs">GET</Badge>
+                             <code className="text-white font-mono text-xs">{baseUrl}/api/proxy-fetch?url=</code>
+                           </div>
+                           <div className="flex items-center gap-2">
+                             <Badge variant="outline" className="bg-blue-900 text-blue-400 border-blue-700 font-mono text-xs">POST</Badge>
+                             <code className="text-white font-mono text-xs">{baseUrl}/api/proxy</code>
+                           </div>
+                           <div className="flex items-center gap-2">
+                             <Badge variant="outline" className="bg-purple-900 text-purple-400 border-purple-700 font-mono text-xs">POST</Badge>
+                             <code className="text-white font-mono text-xs">{baseUrl}/api/chat</code>
+                           </div>
+                         </div>
                 </div>
               </CardContent>
             </Card>
